@@ -1,6 +1,10 @@
 import os
 import requests
 import anthropic
+from openai import OpenAI
+from dotenv import load_dotenv
+
+load_dotenv()
 
 NVD_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0"
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
@@ -54,6 +58,20 @@ Keep it simple — no jargon."""
     )
     return message.content[0].text
 
+def OpenAI_call(message: str) -> str:
+    client = OpenAI()
+
+    response = client.chat.completions.create(
+        model="gpt-4o",  # or "gpt-3.5-turbo"
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": message}
+        ]
+    )
+    
+    return response.choices[0].message.content
+
+
 if __name__ == "__main__":
     cve_id = "CVE-2021-44228"  # Log4Shell
     print(f"Fetching {cve_id} from NVD...\n")
@@ -65,5 +83,6 @@ if __name__ == "__main__":
     print(f"Raw desc:  {cve['description'][:120]}...")
     print("\n--- AI Explanation ---\n")
 
-#    explanation = explain_cve(cve)
-#    print(explanation)
+    #explanation = explain_cve(cve)
+    #print(explanation)
+    print(OpenAI_call("Explain what ChatGPT is in one sentence."))
