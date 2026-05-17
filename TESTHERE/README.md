@@ -1,0 +1,1 @@
+This folder is used for AI connection tests. AIs with access will drop test files here.
