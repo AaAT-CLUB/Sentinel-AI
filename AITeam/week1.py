@@ -4,9 +4,11 @@ import anthropic
 
 NVD_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0"
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
+NVD_API_KEY = os.environ.get("NVD_API_KEY")
 
 def fetch_cve(cve_id: str) -> dict:
-    response = requests.get(NVD_URL, params={"cveId": cve_id})
+    headers = {"apiKey": NVD_API_KEY}
+    response = requests.get(NVD_URL, params={"cveId": cve_id}, headers=headers)
     response.raise_for_status()
     data = response.json()
     vuln = data["vulnerabilities"][0]["cve"]
