@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sentinel AI — API Tester</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0a0e1a;
+      color: #e0e6f0;
+      font-family: 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* NAV */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 40px;
+      background: #0d1224;
+      border-bottom: 1px solid #1e2a45;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #00d4ff;
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #00d4ff, #0066ff);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #0d2a1a;
+      border: 1px solid #00ff88;
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 0.75rem;
+      color: #00ff88;
+    }
+
+    .status-dot {
+      width: 7px; height: 7px;
+      background: #00ff88;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* MAIN */
+    .container {
+      max-width: 900px;
+      margin: 60px auto;
+      padding: 0 30px;
+      width: 100%;
+    }
+
+    .page-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 6px;
+    }
+
+    .page-sub {
+      color: #8899bb;
+      font-size: 0.9rem;
+      margin-bottom: 40px;
+    }
+
+    /* SECTION */
+    .section {
+      background: #0d1224;
+      border: 1px solid #1e2a45;
+      border-radius: 12px;
+      padding: 28px;
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #8899bb;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 18px;
+    }
+
+    .copy-btn {
+      background: transparent;
+      border: 1px solid #1e2a45;
+      border-radius: 6px;
+      padding: 4px 10px;
+      color: #8899bb;
+      font-size: 0.72rem;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .copy-btn:hover { border-color: #00d4ff; color: #00d4ff; }
+
+    footer {
+      text-align: center;
+      padding: 24px;
+      color: #4a5a7a;
+      font-size: 0.78rem;
+      border-top: 1px solid #1e2a45;
+      margin-top: auto;
+    }
+
+    /* ── LINK ANALYSIS SECTION ── */
+    .divider {
+      border: none;
+      border-top: 1px solid #1e2a45;
+      margin: 40px 0;
+    }
+
+    .analyze-input-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .analyze-input-row input {
+      flex: 1;
+      background: #080c18;
+      border: 1px solid #1e2a45;
+      border-radius: 8px;
+      padding: 11px 14px;
+      color: #e0e6f0;
+      font-size: 0.88rem;
+      outline: none;
+      transition: border-color 0.2s;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .analyze-input-row input:focus { border-color: #00d4ff; }
+    .analyze-input-row input::placeholder { color: #3a4a6a; }
+
+    .analyze-btn {
+      background: linear-gradient(135deg, #0066ff, #00d4ff);
+      color: white;
+      border: none;
+      padding: 11px 24px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .analyze-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+    .analyze-btn:active { transform: translateY(0); }
+    .analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .url-error {
+      font-size: 0.78rem;
+      color: #ff5555;
+      margin-top: 6px;
+      min-height: 16px;
+      display: none;
+    }
+
+    /* SCANNING STATE */
+    .scan-state {
+      display: none;
+      align-items: center;
+      gap: 14px;
+      background: #080c18;
+      border: 1px solid #1e2a45;
+      border-radius: 8px;
+      padding: 18px 20px;
+      margin-top: 16px;
+    }
+    .scan-state.visible { display: flex; }
+
+    .scan-ring {
+      width: 28px;
+      height: 28px;
+      border: 2px solid #1e2a45;
+      border-top-color: #00d4ff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .scan-text { font-size: 0.85rem; color: #8899bb; }
+    .scan-step { color: #00d4ff; font-weight: 600; }
+
+    /* RESULT CARD */
+    .result-card {
+      display: none;
+      flex-direction: column;
+      gap: 0;
+      background: #080c18;
+      border: 1px solid #1e2a45;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-top: 16px;
+    }
+    .result-card.visible { display: flex; }
+
+    .result-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid #1e2a45;
+    }
+
+    .result-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .status-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+    .status-icon.safe { background: rgba(0,255,136,0.12); border: 1px solid rgba(0,255,136,0.3); }
+    .status-icon.unsafe { background: rgba(255,50,50,0.12); border: 1px solid rgba(255,50,50,0.3); }
+    .status-icon.medium { background: rgba(255,200,0,0.12); border: 1px solid rgba(255,200,0,0.3); }
+
+    .status-label { font-size: 1rem; font-weight: 700; }
+    .status-label.safe { color: #00ff88; }
+    .status-label.unsafe { color: #ff5555; }
+    .status-label.medium { color: #ffc800; }
+
+    .status-sub { font-size: 0.75rem; color: #8899bb; margin-top: 2px; }
+
+    .risk-pill {
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .risk-pill.HIGH { background: rgba(255,50,50,0.15); color: #ff5555; border: 1px solid rgba(255,50,50,0.3); }
+    .risk-pill.MEDIUM { background: rgba(255,200,0,0.15); color: #ffc800; border: 1px solid rgba(255,200,0,0.3); }
+    .risk-pill.LOW { background: rgba(0,255,136,0.1); color: #00ff88; border: 1px solid rgba(0,255,136,0.25); }
+    .risk-pill.NONE { background: rgba(0,255,136,0.1); color: #00ff88; border: 1px solid rgba(0,255,136,0.25); }
+
+    .result-body { padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+    }
+    .result-row-label { color: #8899bb; }
+    .result-row-value { color: #e0e6f0; font-weight: 500; font-family: 'Courier New', monospace; font-size: 0.82rem; }
+
+    .confidence-bar-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .confidence-bar {
+      width: 100px;
+      height: 5px;
+      background: #1e2a45;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .confidence-fill {
+      height: 100%;
+      border-radius: 3px;
+      background: linear-gradient(90deg, #0066ff, #00d4ff);
+      transition: width 0.8s ease;
+    }
+    .confidence-num { font-size: 0.82rem; color: #00d4ff; font-weight: 600; min-width: 36px; text-align: right; }
+
+    .summary-box {
+      background: #0d1224;
+      border: 1px solid #1e2a45;
+      border-radius: 6px;
+      padding: 12px 14px;
+      font-size: 0.83rem;
+      color: #c0cce0;
+      line-height: 1.6;
+    }
+
+    .result-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 20px;
+      border-top: 1px solid #1e2a45;
+    }
+    .scan-timestamp { font-size: 0.72rem; color: #4a5a7a; font-family: 'Courier New', monospace; }
+
+    /* SCAN HISTORY */
+    .history-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #080c18;
+      border: 1px solid #1e2a45;
+      border-radius: 8px;
+      padding: 10px 14px;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .history-item:hover { border-color: #2e3a55; }
+
+    .history-left { display: flex; align-items: center; gap: 10px; }
+    .history-url { font-size: 0.82rem; color: #c0cce0; font-family: 'Courier New', monospace; max-width: 380px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .history-time { font-size: 0.7rem; color: #4a5a7a; margin-top: 2px; }
+
+    .history-empty { font-size: 0.82rem; color: #3a4a6a; font-style: italic; padding: 8px 0; }
+
+    @media (max-width: 600px) {
+      .analyze-input-row { flex-direction: column; }
+      .result-row { flex-direction: column; align-items: flex-start; gap: 4px; }
+      .history-url { max-width: 200px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">
+    <div class="logo-icon">🛡</div>
+    Sentinel AI
+  </div>
+  <div class="status-badge">
+    <div class="status-dot"></div>
+    Threat Scanner
+  </div>
+</nav>
+
+<div class="container">
+
+  <!-- LINK ANALYSIS -->
+  <div class="page-title">Link Analysis</div>
+  <div class="page-sub" style="margin-bottom:24px">Submit any URL to scan for phishing, malware, and threat indicators using our AI detection engine.</div>
+
+  <!-- INPUT -->
+  <div class="section">
+    <div class="section-title">Analyze a URL</div>
+    <div class="analyze-input-row">
+      <input type="text" id="url-input" placeholder="https://example.com" autocomplete="off" />
+      <button class="analyze-btn" id="analyze-btn" onclick="analyzeLink()">Analyze Link</button>
+    </div>
+    <div class="url-error" id="url-error">Please enter a valid URL starting with http:// or https://</div>
+
+    <!-- SCANNING STATE -->
+    <div class="scan-state" id="scan-state">
+      <div class="scan-ring"></div>
+      <div class="scan-text">
+        <span class="scan-step" id="scan-step">Initializing scan...</span><br/>
+        Submitting to Sentinel AI detection engine
+      </div>
+    </div>
+
+    <!-- RESULT CARD -->
+    <div class="result-card" id="result-card">
+      <div class="result-header">
+        <div class="result-status">
+          <div class="status-icon" id="result-icon"></div>
+          <div>
+            <div class="status-label" id="result-label"></div>
+            <div class="status-sub" id="result-url-display"></div>
+          </div>
+        </div>
+        <div class="risk-pill" id="risk-pill"></div>
+      </div>
+      <div class="result-body">
+        <div class="result-row">
+          <span class="result-row-label">Confidence</span>
+          <div class="confidence-bar-wrap">
+            <div class="confidence-bar">
+              <div class="confidence-fill" id="confidence-fill" style="width:0%"></div>
+            </div>
+            <span class="confidence-num" id="confidence-num">0%</span>
+          </div>
+        </div>
+        <div class="result-row">
+          <span class="result-row-label">Risk Level</span>
+          <span class="result-row-value" id="result-risk"></span>
+        </div>
+        <div class="result-row">
+          <span class="result-row-label">Safety Status</span>
+          <span class="result-row-value" id="result-safe"></span>
+        </div>
+        <div>
+          <div class="result-row-label" style="margin-bottom:8px">Summary</div>
+          <div class="summary-box" id="result-summary"></div>
+        </div>
+      </div>
+      <div class="result-footer">
+        <span class="scan-timestamp" id="scan-timestamp"></span>
+        <button class="copy-btn" onclick="copyResult()">Copy Result</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCAN HISTORY -->
+  <div class="section">
+    <div class="section-title">Scan History</div>
+    <div class="history-list" id="history-list">
+      <div class="history-empty" id="history-empty">No scans yet — submit a URL above to get started.</div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  Sentinel AI · AaAT-CLUB · Capstone 2026
+</footer>
+
+<script>
+  /* ── LINK ANALYSIS ── */
+
+  const API_ENDPOINT = '/api/analyze'; // TODO: update to your backend URL
+  let scanHistory = [];
+  let lastResult = null;
+
+  function isValidUrl(str) {
+    try {
+      const u = new URL(str);
+      return u.protocol === 'http:' || u.protocol === 'https:';
+    } catch { return false; }
+  }
+
+  const scanSteps = [
+    'Resolving domain...',
+    'Checking threat databases...',
+    'Running AI analysis...',
+    'Generating report...'
+  ];
+
+  function runScanSteps(callback) {
+    let i = 0;
+    const el = document.getElementById('scan-step');
+    el.textContent = scanSteps[0];
+    const interval = setInterval(() => {
+      i++;
+      if (i < scanSteps.length) {
+        el.textContent = scanSteps[i];
+      } else {
+        clearInterval(interval);
+        callback();
+      }
+    }, 600);
+  }
+
+  async function analyzeLink() {
+    const input = document.getElementById('url-input');
+    const errEl = document.getElementById('url-error');
+    const btn = document.getElementById('analyze-btn');
+    const url = input.value.trim();
+
+    // Reset
+    errEl.style.display = 'none';
+    document.getElementById('scan-state').classList.remove('visible');
+    document.getElementById('result-card').classList.remove('visible');
+
+    if (!isValidUrl(url)) {
+      errEl.style.display = 'block';
+      return;
+    }
+
+    // Loading state
+    btn.disabled = true;
+    document.getElementById('scan-state').classList.add('visible');
+
+    runScanSteps(async () => {
+      try {
+        /* ── API CALL ──────────────────────────────────────────────
+           Replace this block with your real fetch() call.
+           Expected response: { safe, riskLevel, confidence, summary }
+        ─────────────────────────────────────────────────────────── */
+        const response = await fetch(API_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url })
+        });
+
+        if (!response.ok) throw new Error(`Server error: ${response.status}`);
+        const data = await response.json();
+        showResult(url, data);
+
+      } catch (err) {
+        // If backend not connected yet, show error gracefully
+        showError(err.message);
+      } finally {
+        btn.disabled = false;
+        document.getElementById('scan-state').classList.remove('visible');
+      }
+    });
+  }
+
+  function showResult(url, data) {
+    const { safe, riskLevel, confidence, summary } = data;
+    lastResult = { url, ...data, timestamp: new Date() };
+
+    const safeClass = safe ? 'safe' : riskLevel === 'MEDIUM' ? 'medium' : 'unsafe';
+    const icon = safe ? '✓' : '✕';
+    const label = safe ? 'Safe' : 'Threat Detected';
+
+    document.getElementById('result-icon').className = `status-icon ${safeClass}`;
+    document.getElementById('result-icon').textContent = icon;
+    document.getElementById('result-label').className = `status-label ${safeClass}`;
+    document.getElementById('result-label').textContent = label;
+    document.getElementById('result-url-display').textContent = url.length > 55 ? url.slice(0, 55) + '…' : url;
+
+    const pill = document.getElementById('risk-pill');
+    pill.className = `risk-pill ${riskLevel}`;
+    pill.textContent = riskLevel;
+
+    document.getElementById('confidence-fill').style.width = `${confidence}%`;
+    document.getElementById('confidence-num').textContent = `${confidence}%`;
+    document.getElementById('result-risk').textContent = riskLevel;
+    document.getElementById('result-safe').textContent = safe ? 'SAFE' : 'UNSAFE';
+    document.getElementById('result-summary').textContent = summary;
+    document.getElementById('scan-timestamp').textContent =
+      'Scanned at ' + new Date().toLocaleTimeString();
+
+    document.getElementById('result-card').classList.add('visible');
+    addToHistory(url, riskLevel, safe);
+  }
+
+  function showError(msg) {
+    document.getElementById('result-card').classList.remove('visible');
+    const area = document.getElementById('response-area');
+    area.innerHTML = `<span style="color:#ff5555">Error: ${msg}</span>\n<span style="color:#4a5a7a">Make sure your backend is running at ${API_ENDPOINT}</span>`;
+  }
+
+  function addToHistory(url, riskLevel, safe) {
+    scanHistory.unshift({ url, riskLevel, safe, time: new Date() });
+    if (scanHistory.length > 10) scanHistory.pop();
+    renderHistory();
+  }
+
+  function renderHistory() {
+    const list = document.getElementById('history-list');
+    const empty = document.getElementById('history-empty');
+    if (scanHistory.length === 0) { empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+
+    list.innerHTML = '';
+    scanHistory.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'history-item';
+      const pillClass = item.riskLevel;
+      div.innerHTML = `
+        <div class="history-left">
+          <div>
+            <div class="history-url">${item.url}</div>
+            <div class="history-time">${item.time.toLocaleTimeString()}</div>
+          </div>
+        </div>
+        <span class="risk-pill ${pillClass}" style="font-size:0.7rem;padding:2px 10px">${item.riskLevel}</span>`;
+      list.appendChild(div);
+    });
+  }
+
+  function copyResult() {
+    if (!lastResult) return;
+    const text = JSON.stringify(lastResult, null, 2);
+    navigator.clipboard.writeText(text);
+  }
+
+  // Allow Enter key to trigger analysis
+  document.getElementById('url-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') analyzeLink();
+  });
+</script>
+
+</body>
+</html>
