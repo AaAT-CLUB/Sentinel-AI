@@ -6,13 +6,9 @@ This folder contains the PostgreSQL database setup and Node.js NVD CVE import sc
 
 ## Database
 
-Database name:
+Database name: sentinel_dev
 
-sentinel_dev
-
-Table:
-
-vulnerabilities
+Table: vulnerabilities
 
 Columns:
 
@@ -26,16 +22,18 @@ Columns:
 
 Install dependencies:
 
-npm install
+`npm install`
 
 Create a .env file:
 
+```
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=sentinel_dev
 DB_USER=postgres
 DB_PASSWORD=your_password_here
+```
 
 Run the CVE import:
 
-npm run import:cves
+`npm run import:cves`
