@@ -225,3 +225,6 @@ __marimo__/
 
 
 .claude/
+
+# Node.JS
+node_modules/
