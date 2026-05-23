@@ -34,8 +34,8 @@ def fetch_cve(cve_id: str) -> dict:
         "published": vuln["published"][:10],
     }
 
-def explain_cve(cve: dict) -> str:
-    client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+def explain_cve_prompt(cve: dict) -> str:
+
     prompt = f"""You are a cybersecurity assistant. Explain this vulnerability in plain English for someone with no security background.
 
 CVE ID: {cve['id']}
@@ -44,33 +44,35 @@ Published: {cve['published']}
 Technical description: {cve['description']}
 
 Explain:
-1. What is affected
-2. What an attacker could do
-3. How serious it is
-4. What should be done to fix it
+1. What an attacker could do
+2. How serious it is
 
-Keep it simple — no jargon."""
+Keep it simple and short."""
+    return prompt
 
-    message = client.messages.create(
-        model="claude-haiku-4-5-20251001",
-        max_tokens=500,
-        messages=[{"role": "user", "content": prompt}]
-    )
-    return message.content[0].text
-
-def OpenAI_call(message: str) -> str:
+def OpenAI_call(prompt: str, model: str) -> str:
     client = OpenAI()
 
     response = client.chat.completions.create(
-        model="gpt-4o",  # or "gpt-3.5-turbo"
+        model=model,  # or "gpt-3.5-turbo"
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": message}
+            {"role": "user", "content": prompt}
         ]
     )
     
     return response.choices[0].message.content
 
+def claudeAI_call(prompt: str, model: str) -> str:
+    client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+    
+    message = client.messages.create(
+        model=model,
+        max_tokens=500,
+        messages=[{"role": "user", "content": prompt}]
+    )
+    
+    return message.content[0].text
 
 if __name__ == "__main__":
     cve_id = "CVE-2021-44228"  # Log4Shell
@@ -83,6 +85,14 @@ if __name__ == "__main__":
     print(f"Raw desc:  {cve['description'][:120]}...")
     print("\n--- AI Explanation ---\n")
 
-    #explanation = explain_cve(cve)
-    #print(explanation)
-    print(OpenAI_call("Explain what ChatGPT is in one sentence."))
+    prompt = explain_cve_prompt(cve)
+    print("\nhaiku 4.5\n")
+    print(claudeAI_call(prompt=prompt, model="claude-haiku-4-5-20251001"))
+    print("\nsonnet 4.6\n")
+    print(claudeAI_call(prompt=prompt, model="claude-sonnet-4-6"))
+    print("\nopus 4.7\n")
+    print(claudeAI_call(prompt=prompt, model="claude-opus-4-7"))
+    print("\ngpt 4o\n")
+    print(OpenAI_call(prompt=prompt, model="gpt-4o"))
+    print("\ngpt 5.4\n")
+    print(OpenAI_call(prompt=prompt, model="gpt-5.4"))
