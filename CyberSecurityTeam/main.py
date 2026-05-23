@@ -60,7 +60,7 @@ def run_cyber_scan(request: ScanRequest):
         print(f"Starting API scan on target: {request.target}...")
         
         # Run the scan dynamically using the target variable passed to the API
-        nm.scan(request.target, arguments='-v')
+        nm.scan(request.target, arguments='-sV')
         
         if not nm.all_hosts():
             raise HTTPException(status_code=400, detail="Target host could not be resolved or scanned.")
