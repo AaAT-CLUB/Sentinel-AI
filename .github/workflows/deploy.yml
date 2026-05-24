@@ -21,14 +21,16 @@ jobs:
             cd /root/Sentinel-AI
             git pull origin main
 
-            # Update ALL frontend files
-            cp CyberSecurityTeam/frontend/* /var/www/sentinel/
+            # Update frontend files
+            cp WebServer/frontend/index.html  /var/www/sentinel/
+            cp WebServer/frontend/styles.css  /var/www/sentinel/
+            cp WebServer/frontend/script.js   /var/www/sentinel/
 
             # Update backend services
-            cp AITeam/backend/app/services/scanner_shell.py /root/sentinel-ai/backend/app/services/scanner_shell.py
-            cp AITeam/backend/app/services/analyzer.py      /root/sentinel-ai/backend/app/services/analyzer.py
-            cp AITeam/backend/app/routes/analyze.py         /root/sentinel-ai/backend/app/routes/analyze.py
-            cp AITeam/backend/app/main.py                   /root/sentinel-ai/backend/app/main.py
+            cp WebServer/backend/app/services/scanner_shell.py /root/sentinel-ai/backend/app/services/scanner_shell.py
+            cp WebServer/backend/app/services/analyzer.py      /root/sentinel-ai/backend/app/services/analyzer.py
+            cp WebServer/backend/app/routes/analyze.py         /root/sentinel-ai/backend/app/routes/analyze.py
+            cp WebServer/backend/app/main.py                   /root/sentinel-ai/backend/app/main.py
 
             # Restart API
             systemctl restart sentinel-api
