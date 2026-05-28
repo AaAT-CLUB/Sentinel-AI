@@ -31,7 +31,6 @@ import nmap
 
 
 # ── RETURN FORMAT ────────────────────────────────────────────────────
-# This is what we pass to Claude. Keep these keys consistent.
 def empty_result() -> dict:
     return {
         "open_ports": [],
@@ -43,87 +42,55 @@ def empty_result() -> dict:
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #   TEAM 3 — EDIT HERE
-#   Replace the placeholder below with your scanner logic.
-#   The `domain` parameter is the target (e.g. "google.com")
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 def scan_target(domain: str) -> dict:
-    """
-    Run a security scan against the given domain.
-    Returns structured findings for the AI to interpret.
-
-    Args:
-        domain: The target domain, e.g. "example.com"
-
-    Returns:
-        dict with keys: open_ports, services, flags, raw
-    """
-
     nm = nmap.PortScanner()
     result = empty_result()
 
     try:
         print(f"Scanner shell: starting scan on {domain}...")
 
-        # Run the scan with version detection
-        nm.scan(domain, arguments='-sV')
+        # -T4 = aggressive timing (faster), --top-ports 100 = only scan common ports
+        # --host-timeout 30s = give up after 30 seconds so we never block the API
+        nm.scan(domain, arguments='-T4 --top-ports 100 --host-timeout 30s')
 
-        # If nothing came back, flag it and return early
         if not nm.all_hosts():
             result["flags"].append("No hosts found — target may be offline or blocking scans")
             return result
 
         host = nm.all_hosts()[0]
-
-        # Store raw host info for the AI to read
         result["raw"] = f"Host: {host} | State: {nm[host].state()} | Hostname: {nm[host].hostname()}"
 
-        # Loop through every protocol and port found
         for proto in nm[host].all_protocols():
-            ports = nm[host][proto].keys()
-
-            for port in ports:
+            for port in nm[host][proto].keys():
                 data = nm[host][proto][port]
-                state = data['state']
-                name = data.get('name', '')
-                product = data.get('product', '')
-                version = data.get('version', '')
-
-                # Build a readable service string
-                service_label = f"{name} {product} {version}".strip()
-
-                # Only report open ports to the AI
-                if state == 'open':
+                if data['state'] == 'open':
+                    name = data.get('name', '')
+                    product = data.get('product', '')
+                    version = data.get('version', '')
+                    service_label = f"{name} {product} {version}".strip()
                     result["open_ports"].append(port)
                     result["services"][str(port)] = service_label if service_label else "unknown"
 
         # ── PLAIN ENGLISH FLAGS FOR THE AI ──────────────────────────
         if 21 in result["open_ports"]:
             result["flags"].append("FTP open on port 21 — unencrypted file transfer, high risk")
-
         if 22 in result["open_ports"]:
             result["flags"].append("SSH exposed on port 22 — remote login possible, check auth strength")
-
         if 23 in result["open_ports"]:
             result["flags"].append("Telnet open on port 23 — extremely insecure, unencrypted remote access")
-
         if 80 in result["open_ports"]:
             result["flags"].append("HTTP running on port 80 — unencrypted web traffic, consider HTTPS")
-
         if 443 in result["open_ports"]:
             result["flags"].append("HTTPS running on port 443 — encrypted web traffic, good")
-
         if 3306 in result["open_ports"]:
             result["flags"].append("MySQL database exposed on port 3306 — critical, should not be public")
-
         if 5432 in result["open_ports"]:
             result["flags"].append("PostgreSQL database exposed on port 5432 — critical, should not be public")
-
         if 6379 in result["open_ports"]:
             result["flags"].append("Redis exposed on port 6379 — critical, often has no auth by default")
-
         if 8080 in result["open_ports"]:
             result["flags"].append("Alternative HTTP on port 8080 — often used for admin panels, check access")
-
         if not result["open_ports"]:
             result["flags"].append("No open ports detected — target may be heavily firewalled")
 
