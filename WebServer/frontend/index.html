@@ -116,6 +116,8 @@
 // ── RADAR + DOT ANIMATION ─────────────────────────────────────────────
 // Both the radar sweep rotation and the dot glow are driven from the
 // exact same JS clock (performance.now), so they are always in perfect sync.
+// The conic gradient's sharp bright edge sits 60deg ahead of the rotation
+// origin, so we offset the dot calculation by +60 to match.
 
 const RADAR_PERIOD = 4000; // ms per full rotation
 const SWEEP_WIDTH  = 48;   // degrees — how wide the glow trail is
@@ -153,14 +155,17 @@ const t0 = performance.now();
 function frame(now) {
   const sweep = ((now - t0) % RADAR_PERIOD) / RADAR_PERIOD * 360;
 
-  // Rotate radar — same value used for dots, so always in sync
+  // Rotate radar
   radarEl.style.transform = `translate(-50%,-50%) rotate(${sweep}deg)`;
 
-  // Glow dots exactly as the leading edge of the sweep hits them
+  // The conic gradient's sharp bright edge is at sweep+60 in world space.
+  // Use that as the reference so dots peak exactly when the line hits them.
+  const lineDeg = (sweep + 60) % 360;
+
   dots.forEach(({ el, deg }) => {
-    const diff = (sweep - deg + 360) % 360;
+    const diff = (lineDeg - deg + 360) % 360;
     if (diff < SWEEP_WIDTH) {
-      const i = Math.pow(1 - diff / SWEEP_WIDTH, 1.4); // sharper at leading edge
+      const i = Math.pow(1 - diff / SWEEP_WIDTH, 1.4);
       el.style.background = `rgba(124,58,237,${0.1 + i * 0.9})`;
       el.style.boxShadow  = i > 0.1
         ? `0 0 ${i*14}px rgba(124,58,237,${i}),0 0 ${i*28}px rgba(168,85,247,${i*0.45})`
