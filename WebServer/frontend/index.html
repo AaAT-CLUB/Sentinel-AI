@@ -19,44 +19,31 @@
   </div>
 </nav>
 
-<!-- HERO -->
 <div class="hero">
-
-  <!-- Edge particles only (left & right sides) -->
   <div class="particles">
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
+    <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+    <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+    <div class="particle"></div><div class="particle"></div><div class="particle"></div>
     <div class="particle"></div>
   </div>
 
-  <!-- Rotating rings + centered radar sweep -->
   <div class="rings-container">
     <div class="ring ring-1"></div>
     <div class="ring ring-2"></div>
     <div class="ring ring-3"></div>
     <div class="ring ring-4"></div>
     <div class="ring ring-5"></div>
-    <div class="radar-sweep"></div>
+    <div class="radar-sweep" id="radar-sweep"></div>
   </div>
 
-  <!-- Static dots on rings (lit by JS radar sync) -->
   <div class="dots-container" id="dots-container"></div>
 
   <h1 class="hero-title">Scan any link for <span>threats.</span></h1>
   <p class="hero-sub">AI-powered threat detection using real-time port scanning, CVE lookup, and deep analysis.</p>
-
   <div class="hero-progress"><div class="hero-progress-fill"></div></div>
 </div>
 
 <div class="container">
-
   <div class="input-card">
     <div class="analyze-input-row">
       <input type="text" id="url-input" placeholder="https://example.com" autocomplete="off" />
@@ -120,68 +107,73 @@
       <div class="history-empty" id="history-empty">No scans yet — submit a URL above to get started.</div>
     </div>
   </div>
-
 </div>
 
 <footer>Sentinel AI · AaAT-CLUB · Capstone 2026</footer>
 <script src="script.js"></script>
 
 <script>
-// ── RADAR DOT ANIMATION ──────────────────────────────────────────────
-// Dots sit on each ring at fixed angles. They glow when the radar sweep passes.
-// Radar period = 4000ms (matches CSS animation: radar-rotate 4s linear infinite)
+// ── RADAR + DOT ANIMATION ─────────────────────────────────────────────
+// Both the radar sweep rotation and the dot glow are driven from the
+// exact same JS clock (performance.now), so they are always in perfect sync.
 
-const RADAR_PERIOD = 4000;
-const SWEEP_WIDTH  = 65; // degrees of glow window
+const RADAR_PERIOD = 4000; // ms per full rotation
+const SWEEP_WIDTH  = 48;   // degrees — how wide the glow trail is
 
-// [angle_deg, radius_px] — angle 0 = top, clockwise. radius within 700×700 container.
 const DOT_DEFS = [
   // ring-1 (r=80)
-  [30, 80], [150, 80], [270, 80],
+  [30,80],[150,80],[270,80],
   // ring-2 (r=130)
-  [15, 130], [100, 130], [200, 130], [320, 130],
+  [15,130],[100,130],[200,130],[320,130],
   // ring-3 (r=185)
-  [50, 185], [140, 185], [240, 185], [350, 185],
+  [50,185],[140,185],[240,185],[350,185],
   // ring-4 (r=240)
-  [25, 240], [85, 240], [175, 240], [255, 240], [315, 240],
+  [25,240],[85,240],[175,240],[255,240],[315,240],
   // ring-5 (r=300)
-  [60, 300], [120, 300], [195, 300], [280, 300], [340, 300],
+  [60,300],[120,300],[195,300],[280,300],[340,300],
 ];
 
-const container = document.getElementById('dots-container');
-const cx = 350, cy = 350; // center of 700×700 container
+const radarEl      = document.getElementById('radar-sweep');
+const dotsWrap     = document.getElementById('dots-container');
+const CX = 350, CY = 350;
 
-const dots = DOT_DEFS.map(([angle, r]) => {
-  const rad = (angle - 90) * Math.PI / 180;
-  const x = cx + r * Math.cos(rad);
-  const y = cy + r * Math.sin(rad);
-  const el = document.createElement('div');
-  el.className = 'ring-dot';
-  el.style.left = x + 'px';
-  el.style.top  = y + 'px';
-  container.appendChild(el);
-  return { el, angle };
+// Build dots
+const dots = DOT_DEFS.map(([deg, r]) => {
+  const rad = (deg - 90) * Math.PI / 180;
+  const el  = document.createElement('div');
+  el.className  = 'ring-dot';
+  el.style.left = (CX + r * Math.cos(rad)) + 'px';
+  el.style.top  = (CY + r * Math.sin(rad)) + 'px';
+  dotsWrap.appendChild(el);
+  return { el, deg };
 });
 
-function animateDots() {
-  const sweepAngle = ((Date.now() % RADAR_PERIOD) / RADAR_PERIOD) * 360;
-  dots.forEach(({ el, angle }) => {
-    const diff = (sweepAngle - angle + 360) % 360;
+const t0 = performance.now();
+
+function frame(now) {
+  const sweep = ((now - t0) % RADAR_PERIOD) / RADAR_PERIOD * 360;
+
+  // Rotate radar — same value used for dots, so always in sync
+  radarEl.style.transform = `translate(-50%,-50%) rotate(${sweep}deg)`;
+
+  // Glow dots exactly as the leading edge of the sweep hits them
+  dots.forEach(({ el, deg }) => {
+    const diff = (sweep - deg + 360) % 360;
     if (diff < SWEEP_WIDTH) {
-      const t = 1 - (diff / SWEEP_WIDTH);
-      const glow = Math.pow(t, 1.5);
-      el.style.background = `rgba(124,58,237,${0.2 + glow * 0.8})`;
-      el.style.boxShadow  = glow > 0.2
-        ? `0 0 ${glow * 10}px rgba(124,58,237,${glow}), 0 0 ${glow * 20}px rgba(168,85,247,${glow * 0.5})`
+      const i = Math.pow(1 - diff / SWEEP_WIDTH, 1.4); // sharper at leading edge
+      el.style.background = `rgba(124,58,237,${0.1 + i * 0.9})`;
+      el.style.boxShadow  = i > 0.1
+        ? `0 0 ${i*14}px rgba(124,58,237,${i}),0 0 ${i*28}px rgba(168,85,247,${i*0.45})`
         : 'none';
     } else {
-      el.style.background = 'rgba(124,58,237,0.2)';
+      el.style.background = 'rgba(124,58,237,0.12)';
       el.style.boxShadow  = 'none';
     }
   });
-  requestAnimationFrame(animateDots);
+
+  requestAnimationFrame(frame);
 }
-animateDots();
+requestAnimationFrame(frame);
 </script>
 
 </body>
