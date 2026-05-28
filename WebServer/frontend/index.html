@@ -22,7 +22,7 @@
 <!-- HERO -->
 <div class="hero">
 
-  <!-- Floating particles -->
+  <!-- Edge particles only (left & right sides) -->
   <div class="particles">
     <div class="particle"></div>
     <div class="particle"></div>
@@ -36,29 +36,27 @@
     <div class="particle"></div>
   </div>
 
-  <!-- Rotating rings -->
+  <!-- Rotating rings + centered radar sweep -->
   <div class="rings-container">
     <div class="ring ring-1"></div>
     <div class="ring ring-2"></div>
     <div class="ring ring-3"></div>
     <div class="ring ring-4"></div>
     <div class="ring ring-5"></div>
-    <!-- Radar sweep -->
     <div class="radar-sweep"></div>
   </div>
+
+  <!-- Static dots on rings (lit by JS radar sync) -->
+  <div class="dots-container" id="dots-container"></div>
 
   <h1 class="hero-title">Scan any link for <span>threats.</span></h1>
   <p class="hero-sub">AI-powered threat detection using real-time port scanning, CVE lookup, and deep analysis.</p>
 
-  <!-- Bottom progress bar -->
-  <div class="hero-progress">
-    <div class="hero-progress-fill"></div>
-  </div>
+  <div class="hero-progress"><div class="hero-progress-fill"></div></div>
 </div>
 
 <div class="container">
 
-  <!-- URL INPUT -->
   <div class="input-card">
     <div class="analyze-input-row">
       <input type="text" id="url-input" placeholder="https://example.com" autocomplete="off" />
@@ -66,7 +64,6 @@
     </div>
     <div class="url-error" id="url-error">Please enter a valid URL starting with http:// or https://</div>
 
-    <!-- SCANNING ANIMATION -->
     <div class="scan-state" id="scan-state">
       <div class="scan-top">
         <div class="scan-ring"></div>
@@ -75,12 +72,9 @@
           Running Sentinel AI detection engine
         </div>
       </div>
-      <div class="scan-progress-track">
-        <div class="scan-progress-fill"></div>
-      </div>
+      <div class="scan-progress-track"><div class="scan-progress-fill"></div></div>
     </div>
 
-    <!-- RESULT CARD -->
     <div class="result-card" id="result-card">
       <div class="result-header">
         <div class="result-status">
@@ -96,9 +90,7 @@
         <div class="result-row">
           <span class="result-row-label">Confidence</span>
           <div class="confidence-bar-wrap">
-            <div class="confidence-bar">
-              <div class="confidence-fill" id="confidence-fill" style="width:0%"></div>
-            </div>
+            <div class="confidence-bar"><div class="confidence-fill" id="confidence-fill" style="width:0%"></div></div>
             <span class="confidence-num" id="confidence-num">0%</span>
           </div>
         </div>
@@ -122,7 +114,6 @@
     </div>
   </div>
 
-  <!-- SCAN HISTORY -->
   <div class="section">
     <div class="section-title">Scan History</div>
     <div class="history-list" id="history-list">
@@ -134,5 +125,64 @@
 
 <footer>Sentinel AI · AaAT-CLUB · Capstone 2026</footer>
 <script src="script.js"></script>
+
+<script>
+// ── RADAR DOT ANIMATION ──────────────────────────────────────────────
+// Dots sit on each ring at fixed angles. They glow when the radar sweep passes.
+// Radar period = 4000ms (matches CSS animation: radar-rotate 4s linear infinite)
+
+const RADAR_PERIOD = 4000;
+const SWEEP_WIDTH  = 65; // degrees of glow window
+
+// [angle_deg, radius_px] — angle 0 = top, clockwise. radius within 700×700 container.
+const DOT_DEFS = [
+  // ring-1 (r=80)
+  [30, 80], [150, 80], [270, 80],
+  // ring-2 (r=130)
+  [15, 130], [100, 130], [200, 130], [320, 130],
+  // ring-3 (r=185)
+  [50, 185], [140, 185], [240, 185], [350, 185],
+  // ring-4 (r=240)
+  [25, 240], [85, 240], [175, 240], [255, 240], [315, 240],
+  // ring-5 (r=300)
+  [60, 300], [120, 300], [195, 300], [280, 300], [340, 300],
+];
+
+const container = document.getElementById('dots-container');
+const cx = 350, cy = 350; // center of 700×700 container
+
+const dots = DOT_DEFS.map(([angle, r]) => {
+  const rad = (angle - 90) * Math.PI / 180;
+  const x = cx + r * Math.cos(rad);
+  const y = cy + r * Math.sin(rad);
+  const el = document.createElement('div');
+  el.className = 'ring-dot';
+  el.style.left = x + 'px';
+  el.style.top  = y + 'px';
+  container.appendChild(el);
+  return { el, angle };
+});
+
+function animateDots() {
+  const sweepAngle = ((Date.now() % RADAR_PERIOD) / RADAR_PERIOD) * 360;
+  dots.forEach(({ el, angle }) => {
+    const diff = (sweepAngle - angle + 360) % 360;
+    if (diff < SWEEP_WIDTH) {
+      const t = 1 - (diff / SWEEP_WIDTH);
+      const glow = Math.pow(t, 1.5);
+      el.style.background = `rgba(124,58,237,${0.2 + glow * 0.8})`;
+      el.style.boxShadow  = glow > 0.2
+        ? `0 0 ${glow * 10}px rgba(124,58,237,${glow}), 0 0 ${glow * 20}px rgba(168,85,247,${glow * 0.5})`
+        : 'none';
+    } else {
+      el.style.background = 'rgba(124,58,237,0.2)';
+      el.style.boxShadow  = 'none';
+    }
+  });
+  requestAnimationFrame(animateDots);
+}
+animateDots();
+</script>
+
 </body>
 </html>
