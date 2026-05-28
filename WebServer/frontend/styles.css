@@ -21,57 +21,24 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
 @keyframes dotpulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
 
 /* ── HERO ── */
-.hero {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 70px 48px 56px;
-  overflow: hidden;
-  min-height: 380px;
-}
+.hero { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 70px 48px 56px; overflow: hidden; min-height: 380px; }
 
 /* ── RINGS CONTAINER ── */
-.rings-container {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 700px;
-  height: 700px;
-  pointer-events: none;
-}
+.rings-container { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 700px; height: 700px; pointer-events: none; }
 
-.ring {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  border-radius: 50%;
-  border: 1px solid rgba(124,58,237,0.15);
-}
-.ring::after {
-  content: '';
-  position: absolute;
-  width: 5px; height: 5px;
-  background: #7c3aed;
-  border-radius: 50%;
-  top: -2.5px; left: 50%;
-  margin-left: -2.5px;
-  box-shadow: 0 0 6px #7c3aed;
-}
+.ring { position: absolute; top: 50%; left: 50%; border-radius: 50%; border: 1px solid rgba(124,58,237,0.15); }
+.ring::after { content: ''; position: absolute; width: 5px; height: 5px; background: #7c3aed; border-radius: 50%; top: -2.5px; left: 50%; margin-left: -2.5px; box-shadow: 0 0 6px #7c3aed; }
 
-.ring-1 { width: 160px; height: 160px; animation: spin-cw  8s linear infinite; border-color: rgba(124,58,237,0.35); transform: translate(-50%,-50%) rotate(0deg); }
-.ring-2 { width: 260px; height: 260px; animation: spin-ccw 12s linear infinite; border-color: rgba(124,58,237,0.22); transform: translate(-50%,-50%) rotate(0deg); }
-.ring-3 { width: 370px; height: 370px; animation: spin-cw  18s linear infinite; border-color: rgba(124,58,237,0.14); transform: translate(-50%,-50%) rotate(0deg); }
-.ring-4 { width: 480px; height: 480px; animation: spin-ccw 25s linear infinite; border-color: rgba(124,58,237,0.08); transform: translate(-50%,-50%) rotate(0deg); }
-.ring-5 { width: 600px; height: 600px; animation: spin-cw  35s linear infinite; border-color: rgba(124,58,237,0.05); border-style: dashed; transform: translate(-50%,-50%) rotate(0deg); }
+.ring-1 { width: 160px; height: 160px; animation: spin-cw  8s linear infinite; border-color: rgba(124,58,237,0.35); }
+.ring-2 { width: 260px; height: 260px; animation: spin-ccw 12s linear infinite; border-color: rgba(124,58,237,0.22); }
+.ring-3 { width: 370px; height: 370px; animation: spin-cw  18s linear infinite; border-color: rgba(124,58,237,0.14); }
+.ring-4 { width: 480px; height: 480px; animation: spin-ccw 25s linear infinite; border-color: rgba(124,58,237,0.08); }
+.ring-5 { width: 600px; height: 600px; animation: spin-cw  35s linear infinite; border-color: rgba(124,58,237,0.05); border-style: dashed; }
 
 @keyframes spin-cw  { from{transform:translate(-50%,-50%) rotate(0deg);}   to{transform:translate(-50%,-50%) rotate(360deg);} }
 @keyframes spin-ccw { from{transform:translate(-50%,-50%) rotate(0deg);}   to{transform:translate(-50%,-50%) rotate(-360deg);} }
 
-/* ── RADAR SWEEP — properly centered via transform ── */
+/* ── RADAR SWEEP — rotation driven by JS, not CSS ── */
 .radar-sweep {
   position: absolute;
   top: 50%;
@@ -81,7 +48,7 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
   border-radius: 50%;
   overflow: hidden;
   pointer-events: none;
-  animation: radar-rotate 4s linear infinite;
+  /* NO animation here — JS sets transform directly for perfect dot sync */
 }
 .radar-sweep::before {
   content: '';
@@ -90,81 +57,29 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
   width: 100%; height: 100%;
   background: conic-gradient(from 0deg, transparent 0deg, rgba(124,58,237,0.14) 60deg, transparent 60deg);
 }
-@keyframes radar-rotate {
-  from { transform: translate(-50%,-50%) rotate(0deg); }
-  to   { transform: translate(-50%,-50%) rotate(360deg); }
-}
 
-/* ── DOTS CONTAINER (static, not rotating) ── */
-.dots-container {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 700px;
-  height: 700px;
-  pointer-events: none;
-}
+/* ── DOTS CONTAINER ── */
+.dots-container { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 700px; height: 700px; pointer-events: none; }
 
-.ring-dot {
-  position: absolute;
-  width: 5px;
-  height: 5px;
-  background: rgba(124,58,237,0.25);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  transition: opacity 0.06s, box-shadow 0.06s, background 0.06s;
-}
+.ring-dot { position: absolute; width: 5px; height: 5px; background: rgba(124,58,237,0.12); border-radius: 50%; transform: translate(-50%, -50%); }
 
-/* ── FLOATING PARTICLES — left & right edges only ── */
-.particles {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  pointer-events: none;
-  overflow: hidden;
-}
-.particle {
-  position: absolute;
-  width: 2px; height: 2px;
-  background: #7c3aed;
-  border-radius: 50%;
-  box-shadow: 0 0 4px #7c3aed;
-  animation: float-up linear infinite;
-  opacity: 0;
-}
-/* Left edge particles */
+/* ── PARTICLES — left & right edges only ── */
+.particles { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; }
+.particle { position: absolute; width: 2px; height: 2px; background: #7c3aed; border-radius: 50%; box-shadow: 0 0 4px #7c3aed; animation: float-up linear infinite; opacity: 0; }
 .particle:nth-child(1)  { left: 3%;  animation-duration: 7s;  animation-delay: 0s;   }
 .particle:nth-child(2)  { left: 7%;  animation-duration: 9s;  animation-delay: 2s;   }
 .particle:nth-child(3)  { left: 11%; animation-duration: 6s;  animation-delay: 4s;   }
 .particle:nth-child(4)  { left: 5%;  animation-duration: 8s;  animation-delay: 1s;   }
 .particle:nth-child(5)  { left: 14%; animation-duration: 10s; animation-delay: 3s;   }
-/* Right edge particles */
 .particle:nth-child(6)  { left: 86%; animation-duration: 8s;  animation-delay: 0.5s; }
 .particle:nth-child(7)  { left: 90%; animation-duration: 7s;  animation-delay: 2.5s; }
 .particle:nth-child(8)  { left: 94%; animation-duration: 9s;  animation-delay: 1.5s; }
 .particle:nth-child(9)  { left: 97%; animation-duration: 6s;  animation-delay: 3.5s; }
 .particle:nth-child(10) { left: 88%; animation-duration: 10s; animation-delay: 0s;   }
-
-@keyframes float-up {
-  0%   { transform: translateY(400px); opacity: 0; }
-  10%  { opacity: 0.9; }
-  90%  { opacity: 0.3; }
-  100% { transform: translateY(-60px); opacity: 0; }
-}
+@keyframes float-up { 0%{transform:translateY(400px);opacity:0;} 10%{opacity:0.9;} 90%{opacity:0.3;} 100%{transform:translateY(-60px);opacity:0;} }
 
 /* ── HERO TEXT ── */
-.hero-title {
-  position: relative;
-  font-size: 3.4rem;
-  font-weight: 800;
-  color: #fff;
-  line-height: 1.1;
-  letter-spacing: -1.5px;
-  max-width: 680px;
-  margin-bottom: 18px;
-  text-shadow: 0 0 80px rgba(124,58,237,0.3);
-}
+.hero-title { position: relative; font-size: 3.4rem; font-weight: 800; color: #fff; line-height: 1.1; letter-spacing: -1.5px; max-width: 680px; margin-bottom: 18px; text-shadow: 0 0 80px rgba(124,58,237,0.3); }
 .hero-title span { color: #7c3aed; }
 .hero-sub { position: relative; color: #555; font-size: 1rem; max-width: 440px; line-height: 1.6; }
 
@@ -180,19 +95,16 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
 .input-card { background: #111; border: 1px solid #1a1a1a; border-radius: 16px; padding: 24px; margin-bottom: 12px; position: relative; overflow: hidden; }
 .input-card::before { content: ''; position: absolute; top: 0; left: -100%; width: 60%; height: 1px; background: linear-gradient(90deg, transparent, rgba(124,58,237,0.4), transparent); animation: card-shimmer 4s ease-in-out infinite; }
 @keyframes card-shimmer { 0%{left:-100%} 100%{left:200%} }
-
 .analyze-input-row { display: flex; gap: 10px; }
 .analyze-input-row input { flex: 1; background: #0a0a0a; border: 1px solid #1e1e1e; border-radius: 10px; padding: 13px 16px; color: #e8eaf0; font-size: 0.9rem; outline: none; transition: border-color 0.2s, box-shadow 0.2s; font-family: inherit; }
 .analyze-input-row input:focus { border-color: #7c3aed; box-shadow: 0 0 0 3px rgba(124,58,237,0.1); }
 .analyze-input-row input::placeholder { color: #2a2a2a; }
-
 .analyze-btn { background: #7c3aed; color: white; border: none; padding: 13px 24px; border-radius: 10px; font-size: 0.88rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: background 0.2s, transform 0.15s, box-shadow 0.2s; position: relative; overflow: hidden; }
 .analyze-btn::after { content: ''; position: absolute; top: -50%; left: -60%; width: 40%; height: 200%; background: rgba(255,255,255,0.1); transform: skewX(-20deg); animation: btn-shine 3s ease-in-out infinite; }
 @keyframes btn-shine { 0%,100%{left:-60%} 50%{left:150%} }
 .analyze-btn:hover { background: #6d28d9; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(124,58,237,0.4); }
 .analyze-btn:active { transform: translateY(0); }
 .analyze-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-
 .url-error { font-size: 0.78rem; color: #ef4444; margin-top: 8px; display: none; }
 
 /* ── SCAN STATE ── */
@@ -211,7 +123,6 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
 .result-card { display: none; flex-direction: column; background: #111; border: 1px solid #1a1a1a; border-radius: 16px; overflow: hidden; margin-top: 12px; animation: fade-in 0.4s ease; }
 .result-card.visible { display: flex; }
 @keyframes fade-in { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
-
 .result-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid #161616; }
 .result-status { display: flex; align-items: center; gap: 12px; }
 .status-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
@@ -220,17 +131,13 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
 .status-icon.medium { background: rgba(234,179,8,0.08);  border: 1px solid rgba(234,179,8,0.15); }
 @keyframes danger-pulse { 0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.3)} 50%{box-shadow:0 0 0 6px rgba(239,68,68,0)} }
 .status-label { font-size: 1rem; font-weight: 700; }
-.status-label.safe   { color: #22c55e; }
-.status-label.unsafe { color: #ef4444; }
-.status-label.medium { color: #eab308; }
+.status-label.safe { color: #22c55e; } .status-label.unsafe { color: #ef4444; } .status-label.medium { color: #eab308; }
 .status-sub { font-size: 0.75rem; color: #333; margin-top: 2px; }
-
 .risk-pill { padding: 5px 14px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px; }
 .risk-pill.HIGH   { background: rgba(239,68,68,0.1);  color: #ef4444; border: 1px solid rgba(239,68,68,0.2); }
 .risk-pill.MEDIUM { background: rgba(234,179,8,0.1);  color: #eab308; border: 1px solid rgba(234,179,8,0.2); }
 .risk-pill.LOW    { background: rgba(34,197,94,0.1);  color: #22c55e; border: 1px solid rgba(34,197,94,0.2); }
 .risk-pill.NONE   { background: rgba(34,197,94,0.1);  color: #22c55e; border: 1px solid rgba(34,197,94,0.2); }
-
 .result-body { padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; }
 .result-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; }
 .result-row-label { color: #444; }
