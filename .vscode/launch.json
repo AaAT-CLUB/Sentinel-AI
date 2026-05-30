@@ -1,0 +1,18 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Sentinel AI: Run Scanner",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": [
+                "main:app",
+                "--reload"
+            ],
+            "cwd": "${workspaceFolder}/CyberSecurityTeam",
+            "jinja": true,
+            "justMyCode": true
+        }
+    ]
+}
