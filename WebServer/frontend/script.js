@@ -41,22 +41,37 @@ async function analyzeLink() {
 }
 
 function showResult(url, data) {
-  const { safe, riskLevel, confidence, summary } = data;
+  const { safe, riskLevel, confidence, summary, technical_details } = data;
   lastResult = { url, ...data, timestamp: new Date() };
   const safeClass = safe ? 'safe' : riskLevel === 'MEDIUM' ? 'medium' : 'unsafe';
-  document.getElementById('result-icon').className    = `status-icon ${safeClass}`;
-  document.getElementById('result-icon').textContent  = safe ? '✓' : '✕';
-  document.getElementById('result-label').className   = `status-label ${safeClass}`;
+  
+  document.getElementById('result-icon').className = `status-icon ${safeClass}`;
+  document.getElementById('result-icon').textContent = safe ? '✓' : '✕';
+  document.getElementById('result-label').className = `status-label ${safeClass}`;
   document.getElementById('result-label').textContent = safe ? 'Safe' : 'Threat Detected';
   document.getElementById('result-url-display').textContent = url.length > 55 ? url.slice(0, 55) + '…' : url;
+  
   const pill = document.getElementById('risk-pill');
   pill.className = `risk-pill ${riskLevel}`; pill.textContent = riskLevel;
+  
   document.getElementById('confidence-fill').style.width = `${confidence}%`;
-  document.getElementById('confidence-num').textContent  = `${confidence}%`;
-  document.getElementById('result-risk').textContent     = riskLevel;
-  document.getElementById('result-safe').textContent     = safe ? 'SAFE' : 'UNSAFE';
-  document.getElementById('result-summary').textContent  = summary;
-  document.getElementById('scan-timestamp').textContent  = 'Scanned at ' + new Date().toLocaleTimeString();
+  document.getElementById('confidence-num').textContent = `${confidence}%`;
+  document.getElementById('result-risk').textContent = riskLevel;
+  document.getElementById('result-safe').textContent = safe ? 'SAFE' : 'UNSAFE';
+  
+  // Render summary and inject technical table
+  const summaryEl = document.getElementById('result-summary');
+  summaryEl.innerHTML = summary; 
+  
+  if (technical_details) {
+    summaryEl.innerHTML += `
+      <div style="margin-top:20px; padding:15px; background:#1a1a1a; border:1px solid #444; border-radius:8px;">
+        <h4 style="color:#ff4d4d; margin-top:0;">Infrastructure Vulnerability Data</h4>
+        <pre style="font-family:monospace; white-space:pre-wrap; color:#ddd; font-size:13px;">${technical_details}</pre>
+      </div>`;
+  }
+  
+  document.getElementById('scan-timestamp').textContent = 'Scanned at ' + new Date().toLocaleTimeString();
   document.getElementById('result-card').classList.add('visible');
   addToHistory(url, riskLevel, safe);
 }
