@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentinel AI - Scanner</title>
+    <style>
+        body { background-color: #0f172a; color: #e2e8f0; font-family: sans-serif; padding: 40px 20px; display: flex; justify-content: center; }
+        .container { max-width: 800px; width: 100%; }
+        h1 { color: #38bdf8; text-align: center; }
+        .search-box { display: flex; gap: 10px; margin-bottom: 30px; }
+        input { flex: 1; padding: 15px; border-radius: 8px; border: 1px solid #334155; background-color: #1e293b; color: white; }
+        button { padding: 15px 30px; border-radius: 8px; border: none; background-color: #0284c7; color: white; font-weight: bold; cursor: pointer; }
+        .card { background-color: #1e293b; border-radius: 8px; padding: 20px; margin-bottom: 20px; border: 1px solid #334155; display: none; }
+        pre { white-space: pre-wrap; background: #0f172a; padding: 15px; border-radius: 6px; color: #a7f3d0; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Sentinel AI</h1>
+    <div class="search-box">
+        <input type="text" id="targetInput" placeholder="Enter IP or Domain (e.g., scanme.nmap.org)">
+        <button id="scanBtn" onclick="runScan()">Start Scan</button>
+    </div>
+
+    <div id="resultsCard" class="card">
+        <h2>Results</h2>
+        <p><strong>IP Reputation:</strong> <span id="displayReputation"></span></p>
+        <h3>Open Ports & Software</h3>
+        <pre id="displayPorts"></pre>
+        <h3>Vulnerabilities</h3>
+        <pre id="displayVulns"></pre>
+    </div>
+</div>
+
+<script>
+    async function runScan() {
+        const target = document.getElementById('targetInput').value;
+        const btn = document.getElementById('scanBtn');
+        const resultsCard = document.getElementById('resultsCard');
+
+        btn.disabled = true;
+        btn.innerText = "Scanning...";
+
+        try {
+            // Note: Make sure the port matches your FastAPI server (default is 8000)
+            const response = await fetch(`http://127.0.0.1:8000/scan?target_ip_or_domain=${target}`, {
+                method: 'POST'
+            });
+            const data = await response.json();
+
+            document.getElementById('displayReputation').innerText = data.reputation;
+            document.getElementById('displayPorts').innerText = JSON.stringify(data.open_ports, null, 2);
+            document.getElementById('displayVulns').innerText = JSON.stringify(data.vulnerabilities, null, 2);
+            resultsCard.style.display = "block";
+        } catch (error) {
+            alert("Error connecting to server. Is FastAPI running?");
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "Start Scan";
+        }
+    }
+</script>
+</body>
+</html>
