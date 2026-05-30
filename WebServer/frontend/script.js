@@ -41,7 +41,7 @@ async function analyzeLink() {
 }
 
 function showResult(url, data) {
-  const { safe, riskLevel, confidence, summary, technical_details } = data;
+  const { safe, riskLevel, confidence, summary, vulnerability_table } = data;
   lastResult = { url, ...data, timestamp: new Date() };
   const safeClass = safe ? 'safe' : riskLevel === 'MEDIUM' ? 'medium' : 'unsafe';
   
@@ -63,11 +63,11 @@ function showResult(url, data) {
   const summaryEl = document.getElementById('result-summary');
   summaryEl.innerHTML = summary; 
   
-  if (technical_details) {
+  if (vulnerability_table && vulnerability_table.length > 0) {
     summaryEl.innerHTML += `
       <div style="margin-top:20px; padding:15px; background:#1a1a1a; border:1px solid #444; border-radius:8px;">
         <h4 style="color:#ff4d4d; margin-top:0;">Infrastructure Vulnerability Data</h4>
-        <pre style="font-family:monospace; white-space:pre-wrap; color:#ddd; font-size:13px;">${technical_details}</pre>
+        <pre style="font-family:monospace; white-space:pre-wrap; color:#ddd; font-size:13px;">${vulnerability_table}</pre>
       </div>`;
   }
   
