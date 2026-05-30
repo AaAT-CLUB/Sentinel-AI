@@ -21,7 +21,7 @@ class AnalyzeResponse(BaseModel):
 
 
 @router.post("/analyze", response_model=AnalyzeResponse)
-@limiter.limit("1/minute")
+@limiter.limit("10/minute")
 async def analyze(request: Request, body: AnalyzeRequest):
     url = body.url.strip()
     if not url.startswith(("http://", "https://")):
