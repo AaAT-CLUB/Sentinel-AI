@@ -1,4 +1,5 @@
-const API_ENDPOINT = '/api/analyze';
+const IS_DEV = window.location.protocol === 'file:' || ['5500', '5501', '3000'].includes(window.location.port);
+const API_ENDPOINT = IS_DEV ? 'http://localhost:8000/api/analyze' : '/api/analyze';
 let scanHistory = [];
 let lastResult = null;
 const scanSteps = ['Resolving domain...', 'Checking threat databases...', 'Running AI analysis...', 'Generating report...'];
@@ -92,8 +93,8 @@ function addToHistory(url, riskLevel, safe) {
 function renderHistory() {
   const list = document.getElementById('history-list');
   const empty = document.getElementById('history-empty');
-  if (scanHistory.length === 0) { empty.style.display = 'block'; return; }
-  empty.style.display = 'none'; list.innerHTML = '';
+  if (scanHistory.length === 0) { if (empty) empty.style.display = 'block'; return; }
+  if (empty) empty.style.display = 'none'; list.innerHTML = '';
   scanHistory.forEach(item => {
     const div = document.createElement('div');
     div.className = 'history-item';
