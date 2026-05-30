@@ -177,7 +177,6 @@ def run_full_scan(payload: dict):
     final_vulnerabilities = list(set(team_2_findings + local_vulnerabilities_fallback))
 
     # 3. TRANSPILE DATA TO SPOOF TEAM 1'S EXPECTED FORMAT 
-    # Determine the strict "HIGH" | "MEDIUM" | "LOW" flags they look for
     if max_track_severity >= 7.0:
         ui_risk_level = "HIGH"
         is_safe = False
@@ -191,7 +190,7 @@ def run_full_scan(payload: dict):
     # Convert the 10-point CVSS maximum score into a 0-100 integer for their confidence bar
     ui_confidence = int(min(max_track_severity * 10, 100))
     if ui_confidence == 0 and not is_safe:
-        ui_confidence = 45  # Visual safety floor indicator if bugs exist without defined score metrics
+        ui_confidence = 45 
 
     # Format all complex open port arrays and vulnerability strings into a single text block
     open_ports_list = [f"Port {item['port']}/{item['product']}" for item in scan_results if item['state'] == 'open']
@@ -220,5 +219,4 @@ def run_full_scan(payload: dict):
 
 if __name__ == "__main__":
     import uvicorn
-    # Automatically bind server to localhost on Port 8000
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)

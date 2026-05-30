@@ -1,0 +1,13 @@
+[Unit]
+Description=Sentinel AI FastAPI Backend
+After=network.target
+
+[Service]
+WorkingDirectory=/root/sentinel-ai/backend
+ExecStart=/root/sentinel-ai/backend/venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
+Restart=always
+RestartSec=3
+EnvironmentFile=/root/sentinel-ai/backend/.env
+
+[Install]
+WantedBy=multi-user.target

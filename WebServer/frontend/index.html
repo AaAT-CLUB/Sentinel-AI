@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sentinel AI — Threat Scanner</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<nav>
+  <div class="logo">
+    <div class="logo-icon">🛡</div>
+    Sentinel AI
+  </div>
+  <div class="status-badge">
+    <div class="status-dot"></div>
+    Systems Online
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="particles">
+    <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+    <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+    <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+    <div class="particle"></div>
+  </div>
+
+  <div class="rings-container">
+    <div class="ring ring-1"></div>
+    <div class="ring ring-2"></div>
+    <div class="ring ring-3"></div>
+    <div class="ring ring-4"></div>
+    <div class="ring ring-5"></div>
+    <div class="radar-sweep" id="radar-sweep"></div>
+  </div>
+
+  <div class="dots-container" id="dots-container"></div>
+
+  <h1 class="hero-title">Scan any link for <span>threats.</span></h1>
+  <p class="hero-sub">AI-powered threat detection using real-time port scanning, CVE lookup, and deep analysis.</p>
+  <div class="hero-progress"><div class="hero-progress-fill"></div></div>
+</div>
+
+<div class="container">
+  <div class="input-card">
+    <div class="analyze-input-row">
+      <input type="text" id="url-input" placeholder="https://example.com" autocomplete="off" />
+      <button class="analyze-btn" id="analyze-btn" onclick="analyzeLink()">Analyze →</button>
+    </div>
+    <div class="url-error" id="url-error">Please enter a valid URL starting with http:// or https://</div>
+
+    <div class="scan-state" id="scan-state">
+      <div class="scan-top">
+        <div class="scan-ring"></div>
+        <div class="scan-text">
+          <span class="scan-step" id="scan-step">Initializing scan...</span><br/>
+          Running Sentinel AI detection engine
+        </div>
+      </div>
+      <div class="scan-progress-track"><div class="scan-progress-fill"></div></div>
+    </div>
+
+    <div class="result-card" id="result-card">
+      <div class="result-header">
+        <div class="result-status">
+          <div class="status-icon" id="result-icon"></div>
+          <div>
+            <div class="status-label" id="result-label"></div>
+            <div class="status-sub" id="result-url-display"></div>
+          </div>
+        </div>
+        <div class="risk-pill" id="risk-pill"></div>
+      </div>
+      <div class="result-body">
+        <div class="result-row">
+          <span class="result-row-label">Confidence</span>
+          <div class="confidence-bar-wrap">
+            <div class="confidence-bar"><div class="confidence-fill" id="confidence-fill" style="width:0%"></div></div>
+            <span class="confidence-num" id="confidence-num">0%</span>
+          </div>
+        </div>
+        <div class="result-row">
+          <span class="result-row-label">Risk Level</span>
+          <span class="result-row-value" id="result-risk"></span>
+        </div>
+        <div class="result-row">
+          <span class="result-row-label">Safety Status</span>
+          <span class="result-row-value" id="result-safe"></span>
+        </div>
+        <div>
+          <div class="result-row-label" style="margin-bottom:10px">Summary</div>
+          <div class="summary-box" id="result-summary"></div>
+        </div>
+      </div>
+      <div class="result-footer">
+        <span class="scan-timestamp" id="scan-timestamp"></span>
+        <button class="copy-btn" onclick="copyResult()">Copy Result</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Scan History</div>
+    <div class="history-list" id="history-list">
+      <div class="history-empty" id="history-empty">No scans yet — submit a URL above to get started.</div>
+    </div>
+  </div>
+</div>
+
+<footer>Sentinel AI · AaAT-CLUB · Capstone 2026</footer>
+<script src="script.js"></script>
+
+<script>
+// ── RADAR + DOT ANIMATION ─────────────────────────────────────────────
+// Both the radar sweep rotation and the dot glow are driven from the
+// exact same JS clock (performance.now), so they are always in perfect sync.
+// The conic gradient's sharp bright edge sits 60deg ahead of the rotation
+// origin, so we offset the dot calculation by +60 to match.
+
+const RADAR_PERIOD = 4000; // ms per full rotation
+const SWEEP_WIDTH  = 48;   // degrees — how wide the glow trail is
+
+const DOT_DEFS = [
+  // ring-1 (r=80)
+  [30,80],[150,80],[270,80],
+  // ring-2 (r=130)
+  [15,130],[100,130],[200,130],[320,130],
+  // ring-3 (r=185)
+  [50,185],[140,185],[240,185],[350,185],
+  // ring-4 (r=240)
+  [25,240],[85,240],[175,240],[255,240],[315,240],
+  // ring-5 (r=300)
+  [60,300],[120,300],[195,300],[280,300],[340,300],
+];
+
+const radarEl      = document.getElementById('radar-sweep');
+const dotsWrap     = document.getElementById('dots-container');
+const CX = 350, CY = 350;
+
+// Build dots
+const dots = DOT_DEFS.map(([deg, r]) => {
+  const rad = (deg - 90) * Math.PI / 180;
+  const el  = document.createElement('div');
+  el.className  = 'ring-dot';
+  el.style.left = (CX + r * Math.cos(rad)) + 'px';
+  el.style.top  = (CY + r * Math.sin(rad)) + 'px';
+  dotsWrap.appendChild(el);
+  return { el, deg };
+});
+
+const t0 = performance.now();
+
+function frame(now) {
+  const sweep = ((now - t0) % RADAR_PERIOD) / RADAR_PERIOD * 360;
+
+  // Rotate radar
+  radarEl.style.transform = `translate(-50%,-50%) rotate(${sweep}deg)`;
+
+  // The conic gradient's sharp bright edge is at sweep+60 in world space.
+  // Use that as the reference so dots peak exactly when the line hits them.
+  const lineDeg = (sweep + 60) % 360;
+
+  dots.forEach(({ el, deg }) => {
+    const diff = (lineDeg - deg + 360) % 360;
+    if (diff < SWEEP_WIDTH) {
+      const i = Math.pow(1 - diff / SWEEP_WIDTH, 1.4);
+      el.style.background = `rgba(124,58,237,${0.1 + i * 0.9})`;
+      el.style.boxShadow  = i > 0.1
+        ? `0 0 ${i*14}px rgba(124,58,237,${i}),0 0 ${i*28}px rgba(168,85,247,${i*0.45})`
+        : 'none';
+    } else {
+      el.style.background = 'rgba(124,58,237,0.12)';
+      el.style.boxShadow  = 'none';
+    }
+  });
+
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+
+</body>
+</html>

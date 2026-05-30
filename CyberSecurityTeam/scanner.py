@@ -8,7 +8,7 @@ if __name__ == "__main__":
     print("Starting scan on scanme.nmap.org... (This might take a moment)")
 
     # Run a basic scan against the legal practice website
-    scanner.scan('scanme.nmap.org', arguments='-v')
+    scanner.scan('scanme.nmap.org', arguments='-sV')
 
     # Look through the scan results and print out the doors (ports) it found open
     for host in scanner.all_hosts():

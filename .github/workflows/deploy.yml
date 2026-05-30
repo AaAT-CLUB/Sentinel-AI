@@ -1,0 +1,37 @@
+name: Deploy to DigitalOcean
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 159.223.179.219
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+
+            # Pull latest code
+            cd /root/Sentinel-AI
+            git pull origin main
+
+            # Update frontend files
+            cp WebServer/frontend/index.html  /var/www/sentinel/
+            cp WebServer/frontend/styles.css  /var/www/sentinel/
+            cp WebServer/frontend/script.js   /var/www/sentinel/
+
+            # Update backend services
+            cp WebServer/backend/app/services/scanner_shell.py /root/sentinel-ai/backend/app/services/scanner_shell.py
+            cp WebServer/backend/app/services/analyzer.py      /root/sentinel-ai/backend/app/services/analyzer.py
+            cp WebServer/backend/app/routes/analyze.py         /root/sentinel-ai/backend/app/routes/analyze.py
+            cp WebServer/backend/app/main.py                   /root/sentinel-ai/backend/app/main.py
+
+            # Restart API
+            systemctl restart sentinel-api
+            echo "Deploy complete"
