@@ -91,7 +91,7 @@
         </div>
         <div>
           <div class="result-row-label" style="margin-bottom:10px">Summary</div>
-          <div class="summary-box" id="result-summary"></div>
+          <div class="summary-box" id="result-summary" style="height: auto; min-height: 50px; overflow-y: visible;"></div>
         </div>
       </div>
       <div class="result-footer">
@@ -114,24 +114,14 @@
 
 <script>
 // ── RADAR + DOT ANIMATION ─────────────────────────────────────────────
-// Both the radar sweep rotation and the dot glow are driven from the
-// exact same JS clock (performance.now), so they are always in perfect sync.
-// The conic gradient's sharp bright edge sits 60deg ahead of the rotation
-// origin, so we offset the dot calculation by +60 to match.
-
-const RADAR_PERIOD = 4000; // ms per full rotation
-const SWEEP_WIDTH  = 48;   // degrees — how wide the glow trail is
+const RADAR_PERIOD = 4000;
+const SWEEP_WIDTH  = 48;
 
 const DOT_DEFS = [
-  // ring-1 (r=80)
   [30,80],[150,80],[270,80],
-  // ring-2 (r=130)
   [15,130],[100,130],[200,130],[320,130],
-  // ring-3 (r=185)
   [50,185],[140,185],[240,185],[350,185],
-  // ring-4 (r=240)
   [25,240],[85,240],[175,240],[255,240],[315,240],
-  // ring-5 (r=300)
   [60,300],[120,300],[195,300],[280,300],[340,300],
 ];
 
@@ -139,7 +129,6 @@ const radarEl      = document.getElementById('radar-sweep');
 const dotsWrap     = document.getElementById('dots-container');
 const CX = 350, CY = 350;
 
-// Build dots
 const dots = DOT_DEFS.map(([deg, r]) => {
   const rad = (deg - 90) * Math.PI / 180;
   const el  = document.createElement('div');
@@ -154,12 +143,7 @@ const t0 = performance.now();
 
 function frame(now) {
   const sweep = ((now - t0) % RADAR_PERIOD) / RADAR_PERIOD * 360;
-
-  // Rotate radar
   radarEl.style.transform = `translate(-50%,-50%) rotate(${sweep}deg)`;
-
-  // The conic gradient's sharp bright edge is at sweep+60 in world space.
-  // Use that as the reference so dots peak exactly when the line hits them.
   const lineDeg = (sweep + 60) % 360;
 
   dots.forEach(({ el, deg }) => {
@@ -175,7 +159,6 @@ function frame(now) {
       el.style.boxShadow  = 'none';
     }
   });
-
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
