@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from app.services.analyzer import analyze_url
+import requests as req
 
 router = APIRouter()
 limiter = Limiter(key_func=get_remote_address)
@@ -18,6 +19,35 @@ class AnalyzeResponse(BaseModel):
     confidence: int
     summary: str
     cveCount: int
+
+
+@router.get("/status")
+async def status():
+    # Threat DB — ping NVD API
+    threat_db = False
+    try:
+        r = req.get(
+            "https://services.nvd.nist.gov/rest/json/cves/2.0?resultsPerPage=1",
+            timeout=5
+        )
+        threat_db = r.status_code == 200
+    except Exception:
+        pass
+
+    # AI Engine — check Anthropic status page
+    ai_engine = False
+    try:
+        r = req.get("https://status.anthropic.com/api/v2/status.json", timeout=5)
+        data = r.json()
+        ai_engine = data.get("status", {}).get("indicator") == "none"
+    except Exception:
+        pass
+
+    return {
+        "api": True,        # if this endpoint responds, API is up
+        "threat_db": threat_db,
+        "ai_engine": ai_engine,
+    }
 
 
 @router.post("/analyze", response_model=AnalyzeResponse)
