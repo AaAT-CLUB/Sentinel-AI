@@ -1,10 +1,10 @@
 const IS_DEV = window.location.protocol === 'file:' || ['5500', '5501', '3000'].includes(window.location.port);
 const API_ENDPOINT = IS_DEV ? 'http://localhost:8000/api/analyze' : '/api/analyze';
+const STATUS_ENDPOINT = IS_DEV ? 'http://localhost:8000/api/status' : '/api/status';
 let scanHistory = [];
 let lastResult = null;
 const scanSteps = ['Resolving domain...', 'Checking threat databases...', 'Running AI analysis...', 'Generating report...'];
 
-// Safe element getter — never throws, returns null gracefully
 function el(id) { return document.getElementById(id); }
 
 function isValidUrl(str) {
@@ -12,7 +12,34 @@ function isValidUrl(str) {
   catch { return false; }
 }
 
-// Animate scan step labels — runs independently, doesn't block the fetch
+// ── STATUS INDICATORS ─────────────────────────────────────────────────
+function setDot(key, state) {
+  const dot = el(`dot-${key}`);
+  if (!dot) return;
+  dot.classList.remove('checking', 'online', 'offline');
+  dot.classList.add(state);
+}
+
+async function checkStatus() {
+  try {
+    const r = await fetch(STATUS_ENDPOINT, { method: 'GET' });
+    if (!r.ok) throw new Error();
+    const s = await r.json();
+    setDot('api',    s.api        ? 'online' : 'offline');
+    setDot('threat', s.threat_db  ? 'online' : 'offline');
+    setDot('ai',     s.ai_engine  ? 'online' : 'offline');
+  } catch {
+    setDot('api',    'offline');
+    setDot('threat', 'offline');
+    setDot('ai',     'offline');
+  }
+}
+
+// Check on load, then refresh every 60 seconds
+checkStatus();
+setInterval(checkStatus, 60000);
+
+// ── SCAN ANIMATION ────────────────────────────────────────────────────
 function animateScanSteps() {
   const stepEl = el('scan-step');
   if (!stepEl) return;
@@ -35,12 +62,14 @@ async function analyzeLink() {
   el('scan-state')?.classList.remove('visible');
   el('result-card')?.classList.remove('visible');
 
-  if (!isValidUrl(url)) { if (errEl) { errEl.textContent = 'Please enter a valid URL starting with http:// or https://'; errEl.style.display = 'block'; } return; }
+  if (!isValidUrl(url)) {
+    if (errEl) { errEl.textContent = 'Please enter a valid URL starting with http:// or https://'; errEl.style.display = 'block'; }
+    return;
+  }
 
   if (btn) btn.disabled = true;
   el('scan-state')?.classList.add('visible');
 
-  // Start fetch immediately — animation runs in parallel, not before
   const fetchPromise = fetch(API_ENDPOINT, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -118,10 +147,7 @@ function showResult(url, data) {
 function showError(msg) {
   el('result-card')?.classList.remove('visible');
   const errEl = el('url-error');
-  if (errEl) {
-    errEl.textContent = `Scan failed: ${msg}`;
-    errEl.style.display = 'block';
-  }
+  if (errEl) { errEl.textContent = `Scan failed: ${msg}`; errEl.style.display = 'block'; }
 }
 
 function addToHistory(url, riskLevel, safe) {
