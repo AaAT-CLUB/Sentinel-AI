@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Sentinel AI — Threat Scanner</title>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=3" />
 </head>
 <body>
 
@@ -13,16 +13,16 @@
     <div class="logo-icon">🛡</div>
     Sentinel AI
   </div>
-  <div class="status-badge">
-    <div class="status-item">
+  <div class="status-badge" style="display:flex;flex-direction:column;gap:5px;border:1px solid #1e1e1e;border-radius:12px;padding:10px 16px;font-size:0.72rem;color:#555;background:#111;">
+    <div class="status-item" style="display:flex;align-items:center;gap:8px;">
       <div class="status-dot checking" id="dot-api"></div>
       <span>API</span>
     </div>
-    <div class="status-item">
+    <div class="status-item" style="display:flex;align-items:center;gap:8px;">
       <div class="status-dot checking" id="dot-threat"></div>
       <span>Threat DB</span>
     </div>
-    <div class="status-item">
+    <div class="status-item" style="display:flex;align-items:center;gap:8px;">
       <div class="status-dot checking" id="dot-ai"></div>
       <span>AI Engine</span>
     </div>
