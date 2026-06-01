@@ -16,8 +16,8 @@ body {
 nav { display: flex; align-items: center; justify-content: space-between; padding: 24px 48px; position: relative; z-index: 10; }
 .logo { display: flex; align-items: center; gap: 10px; font-size: 1.1rem; font-weight: 700; color: #fff; letter-spacing: 0.5px; }
 .logo-icon { width: 32px; height: 32px; background: #7c3aed; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
-.status-badge { display: flex; align-items: center; gap: 14px; border: 1px solid #1e1e1e; border-radius: 20px; padding: 6px 16px; font-size: 0.72rem; color: #555; background: #111; }
-.status-item { display: flex; align-items: center; gap: 5px; }
+.status-badge { display: flex; flex-direction: column; gap: 5px; border: 1px solid #1e1e1e; border-radius: 12px; padding: 10px 16px; font-size: 0.72rem; color: #555; background: #111; }
+.status-item { display: flex; align-items: center; gap: 8px; }
 .status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
 .status-dot.checking { background: #333; }
 .status-dot.online  { background: #22c55e; animation: dotpulse 2s infinite; }
@@ -178,5 +178,4 @@ footer { text-align: center; padding: 28px; color: #222; font-size: 0.75rem; bor
   .analyze-input-row { flex-direction: column; }
   .result-row { flex-direction: column; align-items: flex-start; gap: 4px; }
   .history-url { max-width: 200px; }
-  .status-badge { gap: 10px; padding: 6px 12px; }
 }
