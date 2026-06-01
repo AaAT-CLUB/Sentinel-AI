@@ -14,8 +14,18 @@
     Sentinel AI
   </div>
   <div class="status-badge">
-    <div class="status-dot"></div>
-    Systems Online
+    <div class="status-item">
+      <div class="status-dot checking" id="dot-api"></div>
+      <span>API</span>
+    </div>
+    <div class="status-item">
+      <div class="status-dot checking" id="dot-threat"></div>
+      <span>Threat DB</span>
+    </div>
+    <div class="status-item">
+      <div class="status-dot checking" id="dot-ai"></div>
+      <span>AI Engine</span>
+    </div>
   </div>
 </nav>
 
@@ -91,7 +101,7 @@
         </div>
         <div>
           <div class="result-row-label" style="margin-bottom:10px">Summary</div>
-          <div class="summary-box" id="result-summary" style="height: auto; min-height: 50px; overflow-y: visible;"></div>
+          <div class="summary-box" id="result-summary"></div>
         </div>
       </div>
       <div class="result-footer">
@@ -125,8 +135,8 @@ const DOT_DEFS = [
   [60,300],[120,300],[195,300],[280,300],[340,300],
 ];
 
-const radarEl      = document.getElementById('radar-sweep');
-const dotsWrap     = document.getElementById('dots-container');
+const radarEl  = document.getElementById('radar-sweep');
+const dotsWrap = document.getElementById('dots-container');
 const CX = 350, CY = 350;
 
 const dots = DOT_DEFS.map(([deg, r]) => {
@@ -145,7 +155,6 @@ function frame(now) {
   const sweep = ((now - t0) % RADAR_PERIOD) / RADAR_PERIOD * 360;
   radarEl.style.transform = `translate(-50%,-50%) rotate(${sweep}deg)`;
   const lineDeg = (sweep + 60) % 360;
-
   dots.forEach(({ el, deg }) => {
     const diff = (lineDeg - deg + 360) % 360;
     if (diff < SWEEP_WIDTH) {
