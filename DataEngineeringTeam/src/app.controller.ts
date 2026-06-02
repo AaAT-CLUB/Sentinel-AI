@@ -1,7 +1,7 @@
-import { Controller, Get, Post } from '@nestjs/common';
+import { Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { AppService } from './app.service';
+import { ApiKeyGuard } from './auth.guard';
 
-// Main HTTP controller for the API. This class maps routes to service calls.
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
@@ -22,6 +22,7 @@ export class AppController {
   }
 
   @Post('import-cves')
+  @UseGuards(ApiKeyGuard)
   async importCves() {
     return this.appService.importCVEs();
   }
