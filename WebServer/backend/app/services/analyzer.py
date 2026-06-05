@@ -39,10 +39,10 @@ def fetch_cves_from_data_api(keyword: str) -> list:
                 "description": item.get("description", "N/A"),
                 "severity":    item.get("severity", "UNKNOWN"),
             })
-        return cves
+        return cves  # may be empty list if DB has no matches
     except Exception as e:
         print(f"[DataAPI] {e}")
-        return None   # None = failed, not just empty
+        return None  # None = API failed entirely
 
 
 # ── NVD LOOKUP (fallback) ─────────────────────────────────────────────────────
@@ -72,11 +72,18 @@ def fetch_cves_for_domain(domain: str) -> list:
     keyword = domain.replace("www.", "").split(".")[0]
 
     result = fetch_cves_from_data_api(keyword)
-    if result is not None:
+
+    # Use Data API result only if it returned actual CVEs
+    if result:
         print(f"[CVE] Using Data team API — {len(result)} results for '{keyword}'")
         return result
 
-    print(f"[CVE] Data API unavailable — falling back to NVD for '{keyword}'")
+    # Fall back to NVD if Data API failed (None) or DB has no matches yet (empty)
+    if result is None:
+        print(f"[CVE] Data API unavailable — falling back to NVD for '{keyword}'")
+    else:
+        print(f"[CVE] Data API has no results for '{keyword}' — falling back to NVD")
+
     return fetch_cves_from_nvd(keyword)
 
 
