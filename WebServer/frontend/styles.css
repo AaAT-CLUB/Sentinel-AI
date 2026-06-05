@@ -2,15 +2,7 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 /* ── BASE ── */
-body {
-  background: #080808;
-  color: #e8eaf0;
-  font-family: 'Segoe UI', system-ui, sans-serif;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  overflow-x: hidden;
-}
+body { background: #080808; color: #e8eaf0; font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
 
 /* ── NAV ── */
 nav { display: flex; align-items: center; justify-content: space-between; padding: 24px 48px; position: relative; z-index: 10; }
@@ -27,7 +19,7 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
 /* ── HERO ── */
 .hero { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 70px 48px 56px; overflow: hidden; min-height: 380px; }
 
-/* ── RINGS CONTAINER ── */
+/* ── RINGS ── */
 .rings-container { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 700px; height: 700px; pointer-events: none; }
 .ring { position: absolute; top: 50%; left: 50%; border-radius: 50%; border: 1px solid rgba(124,58,237,0.15); }
 .ring::after { content: ''; position: absolute; width: 5px; height: 5px; background: #7c3aed; border-radius: 50%; top: -2.5px; left: 50%; margin-left: -2.5px; box-shadow: 0 0 6px #7c3aed; }
@@ -39,7 +31,7 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
 @keyframes spin-cw  { from{transform:translate(-50%,-50%) rotate(0deg);}   to{transform:translate(-50%,-50%) rotate(360deg);} }
 @keyframes spin-ccw { from{transform:translate(-50%,-50%) rotate(0deg);}   to{transform:translate(-50%,-50%) rotate(-360deg);} }
 
-/* ── RADAR SWEEP ── */
+/* ── RADAR ── */
 .radar-sweep { position: absolute; top: 50%; left: 50%; width: 600px; height: 600px; border-radius: 50%; overflow: hidden; pointer-events: none; }
 .radar-sweep::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: conic-gradient(from 0deg, transparent 0deg, rgba(124,58,237,0.14) 60deg, transparent 60deg); }
 
@@ -66,30 +58,37 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
 .hero-title { position: relative; font-size: 3.4rem; font-weight: 800; color: #fff; line-height: 1.1; letter-spacing: -1.5px; max-width: 680px; margin-bottom: 18px; text-shadow: 0 0 80px rgba(124,58,237,0.3); }
 .hero-title span { color: #7c3aed; }
 .hero-sub { position: relative; color: #555; font-size: 1rem; max-width: 440px; line-height: 1.6; }
-
-/* ── HERO PROGRESS BAR ── */
 .hero-progress { position: absolute; bottom: 0; left: 0; width: 100%; height: 2px; background: #0f0f0f; overflow: hidden; }
 .hero-progress-fill { height: 100%; width: 40%; background: linear-gradient(90deg, transparent, #7c3aed, #a855f7, transparent); animation: scan-line 3s ease-in-out infinite; }
 @keyframes scan-line { 0%{transform:translateX(-100%);} 100%{transform:translateX(350%);} }
 
-/* ── CONTAINER ── */
-.container { max-width: 760px; margin: 0 auto; padding: 40px 32px 80px; width: 100%; position: relative; z-index: 2; }
+/* ── LOWER SECTION — full-width circuit board area ── */
+.lower-section {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+}
 
-/* ── CIRCUIT BOARD BACKGROUND ── */
+/* ── CIRCUIT BOARD LAYERS ── */
 #circuit-dim,
 #circuit-glow {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cpolyline points='0,35 90,35 90,110 160,110' fill='none' stroke='%237c3aed' stroke-width='1'/%3E%3Cline x1='40' y1='0' x2='40' y2='35' stroke='%237c3aed' stroke-width='1'/%3E%3Cpolyline points='0,90 50,90 50,160' fill='none' stroke='%237c3aed' stroke-width='1'/%3E%3Cline x1='120' y1='0' x2='120' y2='35' stroke='%237c3aed' stroke-width='1'/%3E%3Cline x1='90' y1='75' x2='160' y2='75' stroke='%237c3aed' stroke-width='1'/%3E%3Cline x1='140' y1='110' x2='140' y2='160' stroke='%237c3aed' stroke-width='1'/%3E%3Ccircle cx='90' cy='35' r='3' fill='%237c3aed'/%3E%3Ccircle cx='40' cy='35' r='2.5' fill='%237c3aed'/%3E%3Ccircle cx='120' cy='35' r='2.5' fill='%237c3aed'/%3E%3Ccircle cx='90' cy='110' r='3' fill='%237c3aed'/%3E%3Ccircle cx='50' cy='90' r='2.5' fill='%237c3aed'/%3E%3Ccircle cx='90' cy='75' r='2.5' fill='%237c3aed'/%3E%3Ccircle cx='140' cy='110' r='2.5' fill='%237c3aed'/%3E%3C/svg%3E");
-  background-size: 160px 160px;
-  border-radius: inherit;
+  /* Complex PCB pattern: diagonals, branches, through-hole pads, junction pads */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3C!-- Main horizontal trace --%3E%3Cline x1='0' y1='60' x2='110' y2='60' stroke='%237c3aed' stroke-width='1.5'/%3E%3C!-- Diagonal up to top --%3E%3Cline x1='110' y1='60' x2='170' y2='0' stroke='%237c3aed' stroke-width='1.5'/%3E%3Cline x1='170' y1='0' x2='400' y2='0' stroke='%237c3aed' stroke-width='1.5'/%3E%3C!-- Branch down from 110,60 --%3E%3Cline x1='110' y1='60' x2='110' y2='155' stroke='%237c3aed' stroke-width='1.5'/%3E%3Cline x1='110' y1='155' x2='270' y2='155' stroke='%237c3aed' stroke-width='1.5'/%3E%3C!-- Diagonal down-right --%3E%3Cline x1='270' y1='155' x2='330' y2='215' stroke='%237c3aed' stroke-width='1.5'/%3E%3Cline x1='330' y1='215' x2='400' y2='215' stroke='%237c3aed' stroke-width='1.5'/%3E%3C!-- Left branch from 110,155 down to bottom --%3E%3Cline x1='110' y1='155' x2='110' y2='310' stroke='%237c3aed' stroke-width='1.5'/%3E%3Cline x1='110' y1='310' x2='60' y2='360' stroke='%237c3aed' stroke-width='1.5'/%3E%3Cline x1='60' y1='360' x2='60' y2='400' stroke='%237c3aed' stroke-width='1.5'/%3E%3C!-- Right branch 200,155 down --%3E%3Cline x1='200' y1='155' x2='200' y2='270' stroke='%237c3aed' stroke-width='1.5'/%3E%3Cline x1='200' y1='270' x2='260' y2='330' stroke='%237c3aed' stroke-width='1.5'/%3E%3Cline x1='260' y1='330' x2='400' y2='330' stroke='%237c3aed' stroke-width='1.5'/%3E%3C!-- Far left traces --%3E%3Cline x1='0' y1='200' x2='70' y2='200' stroke='%237c3aed' stroke-width='1.5'/%3E%3Cline x1='70' y1='200' x2='110' y2='240' stroke='%237c3aed' stroke-width='1.5'/%3E%3Cline x1='0' y1='310' x2='60' y2='310' stroke='%237c3aed' stroke-width='1.5'/%3E%3C!-- Top area vertical stubs --%3E%3Cline x1='40' y1='0' x2='40' y2='60' stroke='%237c3aed' stroke-width='1.5'/%3E%3Cline x1='290' y1='0' x2='290' y2='60' stroke='%237c3aed' stroke-width='1.5'/%3E%3Cline x1='290' y1='60' x2='400' y2='60' stroke='%237c3aed' stroke-width='1.5'/%3E%3C!-- Bottom area --%3E%3Cline x1='200' y1='270' x2='140' y2='270' stroke='%237c3aed' stroke-width='1.5'/%3E%3Cline x1='140' y1='270' x2='140' y2='400' stroke='%237c3aed' stroke-width='1.5'/%3E%3Cline x1='330' y1='330' x2='330' y2='400' stroke='%237c3aed' stroke-width='1.5'/%3E%3C!-- Junction pads (filled) --%3E%3Ccircle cx='110' cy='60' r='5' fill='%237c3aed'/%3E%3Ccircle cx='40' cy='60' r='4' fill='%237c3aed'/%3E%3Ccircle cx='290' cy='60' r='4' fill='%237c3aed'/%3E%3Ccircle cx='110' cy='155' r='5.5' fill='%237c3aed'/%3E%3Ccircle cx='200' cy='155' r='4.5' fill='%237c3aed'/%3E%3Ccircle cx='270' cy='155' r='4' fill='%237c3aed'/%3E%3Ccircle cx='70' cy='200' r='4' fill='%237c3aed'/%3E%3Ccircle cx='110' cy='240' r='4' fill='%237c3aed'/%3E%3Ccircle cx='110' cy='310' r='4.5' fill='%237c3aed'/%3E%3Ccircle cx='200' cy='270' r='5' fill='%237c3aed'/%3E%3Ccircle cx='140' cy='270' r='4' fill='%237c3aed'/%3E%3Ccircle cx='260' cy='330' r='4' fill='%237c3aed'/%3E%3Ccircle cx='330' cy='215' r='4' fill='%237c3aed'/%3E%3C!-- Through-hole pads (double ring) --%3E%3Ccircle cx='40' cy='0' r='6' fill='none' stroke='%237c3aed' stroke-width='1.5'/%3E%3Ccircle cx='40' cy='0' r='2.5' fill='%237c3aed'/%3E%3Ccircle cx='170' cy='0' r='6' fill='none' stroke='%237c3aed' stroke-width='1.5'/%3E%3Ccircle cx='170' cy='0' r='2.5' fill='%237c3aed'/%3E%3Ccircle cx='290' cy='0' r='6' fill='none' stroke='%237c3aed' stroke-width='1.5'/%3E%3Ccircle cx='290' cy='0' r='2.5' fill='%237c3aed'/%3E%3Ccircle cx='60' cy='400' r='6' fill='none' stroke='%237c3aed' stroke-width='1.5'/%3E%3Ccircle cx='60' cy='400' r='2.5' fill='%237c3aed'/%3E%3Ccircle cx='140' cy='400' r='6' fill='none' stroke='%237c3aed' stroke-width='1.5'/%3E%3Ccircle cx='140' cy='400' r='2.5' fill='%237c3aed'/%3E%3Ccircle cx='330' cy='400' r='6' fill='none' stroke='%237c3aed' stroke-width='1.5'/%3E%3Ccircle cx='330' cy='400' r='2.5' fill='%237c3aed'/%3E%3Ccircle cx='0' cy='200' r='5' fill='none' stroke='%237c3aed' stroke-width='1.5'/%3E%3Ccircle cx='0' cy='200' r='2' fill='%237c3aed'/%3E%3Ccircle cx='400' cy='215' r='5' fill='none' stroke='%237c3aed' stroke-width='1.5'/%3E%3Ccircle cx='400' cy='215' r='2' fill='%237c3aed'/%3E%3C/svg%3E");
+  background-size: 400px 400px;
 }
-#circuit-dim  { opacity: 0.04; z-index: 0; }
-#circuit-glow { opacity: 0.55; z-index: 0; filter: drop-shadow(0 0 3px rgba(124,58,237,0.9)) brightness(1.6); }
+#circuit-dim  { opacity: 0.05; z-index: 0; }
+#circuit-glow { opacity: 0.6;  z-index: 0; filter: drop-shadow(0 0 4px rgba(124,58,237,1)) brightness(1.8); }
+
+/* ── CONTAINER ── */
+.container { max-width: 760px; margin: 0 auto; padding: 40px 32px 80px; width: 100%; position: relative; z-index: 2; }
 
 /* ── INPUT CARD ── */
-.input-card { background: #111; border: 1px solid #1a1a1a; border-radius: 16px; padding: 24px; margin-bottom: 12px; position: relative; overflow: hidden; z-index: 1; }
+.input-card { background: #111; border: 1px solid #1a1a1a; border-radius: 16px; padding: 24px; margin-bottom: 12px; position: relative; overflow: hidden; }
 .input-card::before { content: ''; position: absolute; top: 0; left: -100%; width: 60%; height: 1px; background: linear-gradient(90deg, transparent, rgba(124,58,237,0.4), transparent); animation: card-shimmer 4s ease-in-out infinite; }
 @keyframes card-shimmer { 0%{left:-100%} 100%{left:200%} }
 .analyze-input-row { display: flex; gap: 10px; }
@@ -105,7 +104,7 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
 .url-error { font-size: 0.78rem; color: #ef4444; margin-top: 8px; display: none; }
 
 /* ── SCAN STATE ── */
-.scan-state { display: none; flex-direction: column; gap: 12px; background: #0f0f0f; border: 1px solid #1a1a1a; border-radius: 12px; padding: 20px 24px; margin-top: 12px; position: relative; z-index: 1; }
+.scan-state { display: none; flex-direction: column; gap: 12px; background: #0f0f0f; border: 1px solid #1a1a1a; border-radius: 12px; padding: 20px 24px; margin-top: 12px; }
 .scan-state.visible { display: flex; }
 .scan-top { display: flex; align-items: center; gap: 16px; }
 .scan-ring { width: 24px; height: 24px; border: 2px solid #1e1e1e; border-top-color: #7c3aed; border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
@@ -117,7 +116,7 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
 @keyframes scan-progress { 0%{transform:translateX(-100%);width:30%;} 50%{width:60%;} 100%{transform:translateX(300%);width:30%;} }
 
 /* ── RESULT CARD ── */
-.result-card { display: none; flex-direction: column; background: #111; border: 1px solid #1a1a1a; border-radius: 16px; overflow: hidden; margin-top: 12px; animation: fade-in 0.4s ease; position: relative; z-index: 1; }
+.result-card { display: none; flex-direction: column; background: #111; border: 1px solid #1a1a1a; border-radius: 16px; overflow: hidden; margin-top: 12px; animation: fade-in 0.4s ease; }
 .result-card.visible { display: flex; }
 @keyframes fade-in { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 .result-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid #161616; }
@@ -161,7 +160,7 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
 .history-empty { font-size: 0.82rem; color: #222; font-style: italic; padding: 4px 0; }
 
 /* ── FOOTER ── */
-footer { text-align: center; padding: 28px; color: #222; font-size: 0.75rem; border-top: 1px solid #111; margin-top: auto; }
+footer { text-align: center; padding: 28px; color: #222; font-size: 0.75rem; border-top: 1px solid #111; position: relative; z-index: 2; }
 
 /* ── RESPONSIVE ── */
 @media (max-width: 600px) {
