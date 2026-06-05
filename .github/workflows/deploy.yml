@@ -34,4 +34,16 @@ jobs:
 
             # Restart API
             systemctl restart sentinel-api
+
+            # Update DataEngineeringTeam Nest API. The .env file is managed on
+            # the droplet and must not be overwritten by deployment.
+            cd /root/Sentinel-AI/DataEngineeringTeam
+            npm ci
+            npm run build
+            if systemctl list-unit-files sentinel-data-api.service >/dev/null 2>&1; then
+              systemctl restart sentinel-data-api
+            else
+              echo "sentinel-data-api.service not installed yet; skipping restart"
+            fi
+
             echo "Deploy complete"
