@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Sentinel AI — Threat Scanner</title>
-  <link rel="stylesheet" href="styles.css?v=7" />
+  <link rel="stylesheet" href="styles.css?v=8" />
 </head>
 <body>
 
@@ -50,80 +50,74 @@
   <div class="hero-progress"><div class="hero-progress-fill"></div></div>
 </div>
 
-<div class="lower-section">
-  <div id="circuit-dim"></div>
-  <div id="circuit-glow"></div>
-
-  <div class="container">
-    <div class="input-card">
-      <div class="analyze-input-row">
-        <input type="text" id="url-input" placeholder="https://example.com" autocomplete="off" />
-        <button class="analyze-btn" id="analyze-btn" onclick="analyzeLink()">Analyze →</button>
-      </div>
-      <div class="url-error" id="url-error">Please enter a valid URL starting with http:// or https://</div>
-      <div class="scan-state" id="scan-state">
-        <div class="scan-top">
-          <div class="scan-ring"></div>
-          <div class="scan-text">
-            <span class="scan-step" id="scan-step">Initializing scan...</span><br/>
-            Running Sentinel AI detection engine
-          </div>
-        </div>
-        <div class="scan-progress-track"><div class="scan-progress-fill"></div></div>
-      </div>
-      <div class="result-card" id="result-card">
-        <div class="result-header">
-          <div class="result-status">
-            <div class="status-icon" id="result-icon"></div>
-            <div>
-              <div class="status-label" id="result-label"></div>
-              <div class="status-sub" id="result-url-display"></div>
-            </div>
-          </div>
-          <div class="risk-pill" id="risk-pill"></div>
-        </div>
-        <div class="result-body">
-          <div class="result-row">
-            <span class="result-row-label">Confidence</span>
-            <div class="confidence-bar-wrap">
-              <div class="confidence-bar"><div class="confidence-fill" id="confidence-fill" style="width:0%"></div></div>
-              <span class="confidence-num" id="confidence-num">0%</span>
-            </div>
-          </div>
-          <div class="result-row">
-            <span class="result-row-label">Risk Level</span>
-            <span class="result-row-value" id="result-risk"></span>
-          </div>
-          <div class="result-row">
-            <span class="result-row-label">Safety Status</span>
-            <span class="result-row-value" id="result-safe"></span>
-          </div>
-          <div>
-            <div class="result-row-label" style="margin-bottom:10px">Summary</div>
-            <div class="summary-box" id="result-summary"></div>
-          </div>
-        </div>
-        <div class="result-footer">
-          <span class="scan-timestamp" id="scan-timestamp"></span>
-          <div style="display:flex;gap:8px;">
-            <button class="copy-btn" onclick="downloadResult()">Download</button>
-            <button class="copy-btn" onclick="copyResult()">Copy</button>
-          </div>
-        </div>
-      </div>
+<div class="container">
+  <div class="input-card">
+    <div class="analyze-input-row">
+      <input type="text" id="url-input" placeholder="https://example.com" autocomplete="off" />
+      <button class="analyze-btn" id="analyze-btn" onclick="analyzeLink()">Analyze →</button>
     </div>
-
-    <div class="section">
-      <div class="section-title">Scan History</div>
-      <div class="history-list" id="history-list">
-        <div class="history-empty" id="history-empty">No scans yet — submit a URL above to get started.</div>
+    <div class="url-error" id="url-error">Please enter a valid URL starting with http:// or https://</div>
+    <div class="scan-state" id="scan-state">
+      <div class="scan-top">
+        <div class="scan-ring"></div>
+        <div class="scan-text">
+          <span class="scan-step" id="scan-step">Initializing scan...</span><br/>
+          Running Sentinel AI detection engine
+        </div>
+      </div>
+      <div class="scan-progress-track"><div class="scan-progress-fill"></div></div>
+    </div>
+    <div class="result-card" id="result-card">
+      <div class="result-header">
+        <div class="result-status">
+          <div class="status-icon" id="result-icon"></div>
+          <div>
+            <div class="status-label" id="result-label"></div>
+            <div class="status-sub" id="result-url-display"></div>
+          </div>
+        </div>
+        <div class="risk-pill" id="risk-pill"></div>
+      </div>
+      <div class="result-body">
+        <div class="result-row">
+          <span class="result-row-label">Confidence</span>
+          <div class="confidence-bar-wrap">
+            <div class="confidence-bar"><div class="confidence-fill" id="confidence-fill" style="width:0%"></div></div>
+            <span class="confidence-num" id="confidence-num">0%</span>
+          </div>
+        </div>
+        <div class="result-row">
+          <span class="result-row-label">Risk Level</span>
+          <span class="result-row-value" id="result-risk"></span>
+        </div>
+        <div class="result-row">
+          <span class="result-row-label">Safety Status</span>
+          <span class="result-row-value" id="result-safe"></span>
+        </div>
+        <div>
+          <div class="result-row-label" style="margin-bottom:10px">Summary</div>
+          <div class="summary-box" id="result-summary"></div>
+        </div>
+      </div>
+      <div class="result-footer">
+        <span class="scan-timestamp" id="scan-timestamp"></span>
+        <div style="display:flex;gap:8px;">
+          <button class="copy-btn" onclick="downloadResult()">Download</button>
+          <button class="copy-btn" onclick="copyResult()">Copy</button>
+        </div>
       </div>
     </div>
   </div>
 
-  <footer>Sentinel AI · AaAT-CLUB · Capstone 2026</footer>
+  <div class="section">
+    <div class="section-title">Scan History</div>
+    <div class="history-list" id="history-list">
+      <div class="history-empty" id="history-empty">No scans yet — submit a URL above to get started.</div>
+    </div>
+  </div>
 </div>
 
+<footer>Sentinel AI · AaAT-CLUB · Capstone 2026</footer>
 <script src="script.js?v=4"></script>
 
 <script>
@@ -168,23 +162,6 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
-
-// ── CIRCUIT BOARD SCAN LINE — synced to radar (4000ms) ───────────────
-const circuitGlow  = document.getElementById('circuit-glow');
-const lowerSection = document.querySelector('.lower-section');
-const CIRCUIT_PERIOD = 4000; // same as radar
-
-function circuitFrame(now) {
-  if (circuitGlow && lowerSection) {
-    const h    = lowerSection.offsetHeight;
-    const y    = ((now % CIRCUIT_PERIOD) / CIRCUIT_PERIOD) * (h + 240) - 120;
-    const mask = `linear-gradient(to bottom,transparent ${y-110}px,rgba(255,255,255,0.4) ${y-14}px,white ${y}px,rgba(255,255,255,0.4) ${y+14}px,transparent ${y+110}px)`;
-    circuitGlow.style.webkitMaskImage = mask;
-    circuitGlow.style.maskImage = mask;
-  }
-  requestAnimationFrame(circuitFrame);
-}
-requestAnimationFrame(circuitFrame);
 </script>
 
 </body>
