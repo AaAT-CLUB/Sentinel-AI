@@ -1,4 +1,4 @@
-import { Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { AppService } from './app.service';
 import { ApiKeyGuard } from './auth.guard';
 
@@ -17,8 +17,22 @@ export class AppController {
   }
 
   @Get('vulnerabilities')
-  async getVulnerabilities() {
-    return this.appService.getVulnerabilities();
+  async getVulnerabilities(@Query() query: Record<string, string>) {
+    return this.appService.getVulnerabilities(query);
+  }
+
+  @Get('vulnerabilities/:cveId')
+  async getVulnerabilityByCveId(@Param('cveId') cveId: string) {
+    return this.appService.getVulnerabilityByCveId(cveId);
+  }
+
+  @Post('vulnerabilities')
+  @UseGuards(ApiKeyGuard)
+  async createVulnerability(@Body() body: unknown) {
+    if (Array.isArray(body)) {
+      return this.appService.createVulnerabilities(body);
+    }
+    return this.appService.createVulnerability(body);
   }
 
   @Post('import-cves')

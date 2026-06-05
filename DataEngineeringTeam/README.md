@@ -66,7 +66,9 @@ PORT=3000
 
 - `GET /` — API health and welcome message
 - `GET /health` — health status
-- `GET /vulnerabilities` — list imported vulnerabilities
+- `GET /vulnerabilities` — list imported vulnerabilities. Supports optional filters: `limit`, `cve_id`, `keyword`, `description`, `severity`, `published_from`, and `published_to`.
+- `GET /vulnerabilities/:cve_id` — fetch one vulnerability by exact CVE ID.
+- `POST /vulnerabilities` — insert one vulnerability object or an array of vulnerability objects. Requires an `x-api-key` header matching `API_KEY` and deduplicates by `cve_id`.
 - `POST /import-cves` — fetch CVEs from NVD and insert into the database. Requires an `x-api-key` header matching `API_KEY`.
 
 On the production DigitalOcean droplet, Nginx exposes this API under `/data-api/*` so it does not conflict with the existing FastAPI service under `/api/*`.
@@ -75,7 +77,8 @@ Examples:
 
 ```bash
 curl https://sentinel-a-i.com/data-api/health
-curl https://sentinel-a-i.com/data-api/vulnerabilities
+curl "https://sentinel-a-i.com/data-api/vulnerabilities?severity=HIGH&limit=250"
+curl https://sentinel-a-i.com/data-api/vulnerabilities/CVE-1999-0095
 curl -X POST https://sentinel-a-i.com/data-api/import-cves -H "x-api-key: $API_KEY"
 ```
 
