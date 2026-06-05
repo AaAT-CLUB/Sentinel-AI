@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Sentinel AI — Threat Scanner</title>
-  <link rel="stylesheet" href="styles.css?v=4" />
+  <link rel="stylesheet" href="styles.css?v=5" />
 </head>
 <body>
 
@@ -36,7 +36,6 @@
     <div class="particle"></div><div class="particle"></div><div class="particle"></div>
     <div class="particle"></div>
   </div>
-
   <div class="rings-container">
     <div class="ring ring-1"></div>
     <div class="ring ring-2"></div>
@@ -45,22 +44,23 @@
     <div class="ring ring-5"></div>
     <div class="radar-sweep" id="radar-sweep"></div>
   </div>
-
   <div class="dots-container" id="dots-container"></div>
-
   <h1 class="hero-title">Scan any link for <span>threats.</span></h1>
   <p class="hero-sub">AI-powered threat detection using real-time port scanning, CVE lookup, and deep analysis.</p>
   <div class="hero-progress"><div class="hero-progress-fill"></div></div>
 </div>
 
 <div class="container">
+  <!-- Circuit board background — dim base + glowing layer driven by JS -->
+  <div id="circuit-dim"></div>
+  <div id="circuit-glow"></div>
+
   <div class="input-card">
     <div class="analyze-input-row">
       <input type="text" id="url-input" placeholder="https://example.com" autocomplete="off" />
       <button class="analyze-btn" id="analyze-btn" onclick="analyzeLink()">Analyze →</button>
     </div>
     <div class="url-error" id="url-error">Please enter a valid URL starting with http:// or https://</div>
-
     <div class="scan-state" id="scan-state">
       <div class="scan-top">
         <div class="scan-ring"></div>
@@ -71,7 +71,6 @@
       </div>
       <div class="scan-progress-track"><div class="scan-progress-fill"></div></div>
     </div>
-
     <div class="result-card" id="result-card">
       <div class="result-header">
         <div class="result-status">
@@ -129,7 +128,6 @@
 // ── RADAR + DOT ANIMATION ─────────────────────────────────────────────
 const RADAR_PERIOD = 4000;
 const SWEEP_WIDTH  = 48;
-
 const DOT_DEFS = [
   [30,80],[150,80],[270,80],
   [15,130],[100,130],[200,130],[320,130],
@@ -137,11 +135,9 @@ const DOT_DEFS = [
   [25,240],[85,240],[175,240],[255,240],[315,240],
   [60,300],[120,300],[195,300],[280,300],[340,300],
 ];
-
 const radarEl  = document.getElementById('radar-sweep');
 const dotsWrap = document.getElementById('dots-container');
 const CX = 350, CY = 350;
-
 const dots = DOT_DEFS.map(([deg, r]) => {
   const rad = (deg - 90) * Math.PI / 180;
   const el  = document.createElement('div');
@@ -151,9 +147,7 @@ const dots = DOT_DEFS.map(([deg, r]) => {
   dotsWrap.appendChild(el);
   return { el, deg };
 });
-
 const t0 = performance.now();
-
 function frame(now) {
   const sweep = ((now - t0) % RADAR_PERIOD) / RADAR_PERIOD * 360;
   radarEl.style.transform = `translate(-50%,-50%) rotate(${sweep}deg)`;
@@ -163,9 +157,7 @@ function frame(now) {
     if (diff < SWEEP_WIDTH) {
       const i = Math.pow(1 - diff / SWEEP_WIDTH, 1.4);
       el.style.background = `rgba(124,58,237,${0.1 + i * 0.9})`;
-      el.style.boxShadow  = i > 0.1
-        ? `0 0 ${i*14}px rgba(124,58,237,${i}),0 0 ${i*28}px rgba(168,85,247,${i*0.45})`
-        : 'none';
+      el.style.boxShadow  = i > 0.1 ? `0 0 ${i*14}px rgba(124,58,237,${i}),0 0 ${i*28}px rgba(168,85,247,${i*0.45})` : 'none';
     } else {
       el.style.background = 'rgba(124,58,237,0.12)';
       el.style.boxShadow  = 'none';
@@ -174,6 +166,27 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
+
+// ── CIRCUIT BOARD SCAN LINE ───────────────────────────────────────────
+// A vertical scan line sweeps top→bottom through the lower section.
+// As it passes, the circuit traces glow purple, then fade back to dim.
+const circuitGlow = document.getElementById('circuit-glow');
+const CIRCUIT_PERIOD = 7000; // ms per full sweep
+
+function circuitFrame(now) {
+  if (circuitGlow) {
+    const h   = circuitGlow.offsetHeight;
+    const y   = ((now % CIRCUIT_PERIOD) / CIRCUIT_PERIOD) * (h + 200) - 100;
+    const top = Math.round(y - 90);
+    const mid = Math.round(y);
+    const bot = Math.round(y + 90);
+    const mask = `linear-gradient(to bottom, transparent ${top}px, rgba(255,255,255,0.7) ${mid - 8}px, white ${mid}px, rgba(255,255,255,0.7) ${mid + 8}px, transparent ${bot}px)`;
+    circuitGlow.style.webkitMaskImage = mask;
+    circuitGlow.style.maskImage = mask;
+  }
+  requestAnimationFrame(circuitFrame);
+}
+requestAnimationFrame(circuitFrame);
 </script>
 
 </body>
