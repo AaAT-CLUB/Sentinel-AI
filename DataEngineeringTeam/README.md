@@ -46,6 +46,7 @@ DB_USER=admin
 DB_PASSWORD=your_password_here
 API_KEY=your_api_key_here
 NVD_API_KEY=
+HOST=127.0.0.1
 PORT=3000
 ```
 
@@ -82,3 +83,4 @@ curl -X POST https://sentinel-a-i.com/data-api/import-cves -H "x-api-key: $API_K
 
 - The NestJS app uses Fastify as the HTTP adapter.
 - The API listens on `PORT` from the environment, or port `3000` by default.
+- On the production droplet, set `HOST=127.0.0.1` so the API is reachable through Nginx but not exposed directly on the public network.

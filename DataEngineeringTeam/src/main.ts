@@ -9,8 +9,9 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter());
   const port = Number(process.env.PORT) || 3000;
-  await app.listen(port, '0.0.0.0');
-  console.log(`API running at http://localhost:${port}`);
+  const host = process.env.HOST || '0.0.0.0';
+  await app.listen(port, host);
+  console.log(`API running at http://${host}:${port}`);
 }
 
 bootstrap();
