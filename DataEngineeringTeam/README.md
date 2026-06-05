@@ -79,6 +79,8 @@ curl https://sentinel-a-i.com/data-api/vulnerabilities
 curl -X POST https://sentinel-a-i.com/data-api/import-cves -H "x-api-key: $API_KEY"
 ```
 
+For team-facing usage details, see [API_USAGE.md](API_USAGE.md).
+
 ## Notes
 
 - The NestJS app uses Fastify as the HTTP adapter.
