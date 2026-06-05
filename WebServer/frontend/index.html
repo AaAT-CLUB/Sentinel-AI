@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Sentinel AI — Threat Scanner</title>
-  <link rel="stylesheet" href="styles.css?v=6" />
+  <link rel="stylesheet" href="styles.css?v=7" />
 </head>
 <body>
 
@@ -50,7 +50,6 @@
   <div class="hero-progress"><div class="hero-progress-fill"></div></div>
 </div>
 
-<!-- Lower section — circuit board covers this entire area -->
 <div class="lower-section">
   <div id="circuit-dim"></div>
   <div id="circuit-glow"></div>
@@ -170,16 +169,16 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 
-// ── CIRCUIT BOARD SCAN LINE ───────────────────────────────────────────
-const circuitGlow   = document.getElementById('circuit-glow');
-const lowerSection  = document.querySelector('.lower-section');
-const CIRCUIT_PERIOD = 8000;
+// ── CIRCUIT BOARD SCAN LINE — synced to radar (4000ms) ───────────────
+const circuitGlow  = document.getElementById('circuit-glow');
+const lowerSection = document.querySelector('.lower-section');
+const CIRCUIT_PERIOD = 4000; // same as radar
 
 function circuitFrame(now) {
   if (circuitGlow && lowerSection) {
-    const h   = lowerSection.offsetHeight;
-    const y   = ((now % CIRCUIT_PERIOD) / CIRCUIT_PERIOD) * (h + 240) - 120;
-    const mask = `linear-gradient(to bottom,transparent ${y-100}px,rgba(255,255,255,0.5) ${y-12}px,white ${y}px,rgba(255,255,255,0.5) ${y+12}px,transparent ${y+100}px)`;
+    const h    = lowerSection.offsetHeight;
+    const y    = ((now % CIRCUIT_PERIOD) / CIRCUIT_PERIOD) * (h + 240) - 120;
+    const mask = `linear-gradient(to bottom,transparent ${y-110}px,rgba(255,255,255,0.4) ${y-14}px,white ${y}px,rgba(255,255,255,0.4) ${y+14}px,transparent ${y+110}px)`;
     circuitGlow.style.webkitMaskImage = mask;
     circuitGlow.style.maskImage = mask;
   }
