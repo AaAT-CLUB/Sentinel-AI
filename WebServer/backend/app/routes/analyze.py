@@ -34,17 +34,18 @@ async def status():
     except Exception:
         pass
 
-    # AI Engine — check Anthropic status page
+    # AI Engine — check Claude status page (minor outage still works, only major = offline)
     ai_engine = False
     try:
-        r = req.get("https://status.anthropic.com/api/v2/status.json", timeout=5)
+        r = req.get("https://status.claude.com/api/v2/status.json", timeout=5)
         data = r.json()
-        ai_engine = data.get("status", {}).get("indicator") == "none"
+        indicator = data.get("status", {}).get("indicator", "major")
+        ai_engine = indicator in ("none", "minor")
     except Exception:
         pass
 
     return {
-        "api": True,        # if this endpoint responds, API is up
+        "api":       True,
         "threat_db": threat_db,
         "ai_engine": ai_engine,
     }
