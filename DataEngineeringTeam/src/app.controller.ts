@@ -17,11 +17,13 @@ export class AppController {
   }
 
   @Get('vulnerabilities')
+  @UseGuards(ApiKeyGuard)
   async getVulnerabilities(@Query() query: Record<string, string>) {
     return this.appService.getVulnerabilities(query);
   }
 
   @Get('vulnerabilities/:cveId')
+  @UseGuards(ApiKeyGuard)
   async getVulnerabilityByCveId(@Param('cveId') cveId: string) {
     return this.appService.getVulnerabilityByCveId(cveId);
   }
