@@ -3,6 +3,8 @@ from pydantic import BaseModel
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from app.services.analyzer import analyze_url
+# IMPORT YOUR PROFESSIONAL SCANNER SHELL
+from app.services.scanner_shell import scan_target
 import requests as req
 
 router = APIRouter()
@@ -18,7 +20,8 @@ class AnalyzeResponse(BaseModel):
     riskLevel: str
     confidence: int
     summary: str
-    cveCount: int
+    # Added this field to match your frontend expectation
+    vulnerability_table: str 
 
 
 @router.get("/status")
@@ -34,7 +37,7 @@ async def status():
     except Exception:
         pass
 
-    # AI Engine — check Claude status page (minor outage still works, only major = offline)
+    # AI Engine — check Claude status
     ai_engine = False
     try:
         r = req.get("https://status.claude.com/api/v2/status.json", timeout=5)
@@ -57,7 +60,19 @@ async def analyze(request: Request, body: AnalyzeRequest):
     url = body.url.strip()
     if not url.startswith(("http://", "https://")):
         raise HTTPException(status_code=400, detail="URL must start with http:// or https://")
+    
     try:
-        return analyze_url(url)
+        # 1. Run the AI analysis
+        result = analyze_url(url)
+        
+        # 2. Run your professional scanner shell
+        # This returns the dict structure: open_ports, services, flags, etc.
+        scan_data = scan_target(url)
+        
+        # 3. Merge your findings into the vulnerability_table field
+        # We use the 'summary' from your scanner_shell as the table
+        result["vulnerability_table"] = scan_data.get("summary", "No vulnerabilities found.")
+        
+        return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
