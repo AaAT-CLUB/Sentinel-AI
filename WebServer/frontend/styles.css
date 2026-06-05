@@ -29,43 +29,25 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
 
 /* ── RINGS CONTAINER ── */
 .rings-container { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 700px; height: 700px; pointer-events: none; }
-
 .ring { position: absolute; top: 50%; left: 50%; border-radius: 50%; border: 1px solid rgba(124,58,237,0.15); }
 .ring::after { content: ''; position: absolute; width: 5px; height: 5px; background: #7c3aed; border-radius: 50%; top: -2.5px; left: 50%; margin-left: -2.5px; box-shadow: 0 0 6px #7c3aed; }
-
 .ring-1 { width: 160px; height: 160px; animation: spin-cw  8s linear infinite; border-color: rgba(124,58,237,0.35); }
 .ring-2 { width: 260px; height: 260px; animation: spin-ccw 12s linear infinite; border-color: rgba(124,58,237,0.22); }
 .ring-3 { width: 370px; height: 370px; animation: spin-cw  18s linear infinite; border-color: rgba(124,58,237,0.14); }
 .ring-4 { width: 480px; height: 480px; animation: spin-ccw 25s linear infinite; border-color: rgba(124,58,237,0.08); }
 .ring-5 { width: 600px; height: 600px; animation: spin-cw  35s linear infinite; border-color: rgba(124,58,237,0.05); border-style: dashed; }
-
 @keyframes spin-cw  { from{transform:translate(-50%,-50%) rotate(0deg);}   to{transform:translate(-50%,-50%) rotate(360deg);} }
 @keyframes spin-ccw { from{transform:translate(-50%,-50%) rotate(0deg);}   to{transform:translate(-50%,-50%) rotate(-360deg);} }
 
-/* ── RADAR SWEEP — rotation driven by JS, not CSS ── */
-.radar-sweep {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 600px;
-  height: 600px;
-  border-radius: 50%;
-  overflow: hidden;
-  pointer-events: none;
-}
-.radar-sweep::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: conic-gradient(from 0deg, transparent 0deg, rgba(124,58,237,0.14) 60deg, transparent 60deg);
-}
+/* ── RADAR SWEEP ── */
+.radar-sweep { position: absolute; top: 50%; left: 50%; width: 600px; height: 600px; border-radius: 50%; overflow: hidden; pointer-events: none; }
+.radar-sweep::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: conic-gradient(from 0deg, transparent 0deg, rgba(124,58,237,0.14) 60deg, transparent 60deg); }
 
-/* ── DOTS CONTAINER ── */
+/* ── DOTS ── */
 .dots-container { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 700px; height: 700px; pointer-events: none; }
 .ring-dot { position: absolute; width: 5px; height: 5px; background: rgba(124,58,237,0.12); border-radius: 50%; transform: translate(-50%, -50%); }
 
-/* ── PARTICLES — left & right edges only ── */
+/* ── PARTICLES ── */
 .particles { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; }
 .particle { position: absolute; width: 2px; height: 2px; background: #7c3aed; border-radius: 50%; box-shadow: 0 0 4px #7c3aed; animation: float-up linear infinite; opacity: 0; }
 .particle:nth-child(1)  { left: 3%;  animation-duration: 7s;  animation-delay: 0s;   }
@@ -84,8 +66,6 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
 .hero-title { position: relative; font-size: 3.4rem; font-weight: 800; color: #fff; line-height: 1.1; letter-spacing: -1.5px; max-width: 680px; margin-bottom: 18px; text-shadow: 0 0 80px rgba(124,58,237,0.3); }
 .hero-title span { color: #7c3aed; }
 .hero-sub { position: relative; color: #555; font-size: 1rem; max-width: 440px; line-height: 1.6; }
-
-/* ── HERO PROGRESS BAR ── */
 .hero-progress { position: absolute; bottom: 0; left: 0; width: 100%; height: 2px; background: #0f0f0f; overflow: hidden; }
 .hero-progress-fill { height: 100%; width: 40%; background: linear-gradient(90deg, transparent, #7c3aed, #a855f7, transparent); animation: scan-line 3s ease-in-out infinite; }
 @keyframes scan-line { 0%{transform:translateX(-100%);} 100%{transform:translateX(350%);} }

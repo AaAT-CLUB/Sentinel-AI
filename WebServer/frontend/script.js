@@ -1,8 +1,8 @@
 const IS_DEV = window.location.protocol === 'file:' || ['5500', '5501', '3000'].includes(window.location.port);
-const API_ENDPOINT = IS_DEV ? 'http://localhost:8000/api/analyze' : '/api/analyze';
-const STATUS_ENDPOINT = IS_DEV ? 'http://localhost:8000/api/status' : '/api/status';
+const API_ENDPOINT    = IS_DEV ? 'http://localhost:8000/api/analyze' : '/api/analyze';
+const STATUS_ENDPOINT = IS_DEV ? 'http://localhost:8000/api/status'  : '/api/status';
 let scanHistory = [];
-let lastResult = null;
+let lastResult  = null;
 const scanSteps = ['Resolving domain...', 'Checking threat databases...', 'Running AI analysis...', 'Generating report...'];
 
 function el(id) { return document.getElementById(id); }
@@ -22,20 +22,16 @@ function setDot(key, state) {
 
 async function checkStatus() {
   try {
-    const r = await fetch(STATUS_ENDPOINT, { method: 'GET' });
+    const r = await fetch(STATUS_ENDPOINT);
     if (!r.ok) throw new Error();
     const s = await r.json();
-    setDot('api',    s.api        ? 'online' : 'offline');
-    setDot('threat', s.threat_db  ? 'online' : 'offline');
-    setDot('ai',     s.ai_engine  ? 'online' : 'offline');
+    setDot('api',    s.api       ? 'online' : 'offline');
+    setDot('threat', s.threat_db ? 'online' : 'offline');
+    setDot('ai',     s.ai_engine ? 'online' : 'offline');
   } catch {
-    setDot('api',    'offline');
-    setDot('threat', 'offline');
-    setDot('ai',     'offline');
+    setDot('api', 'offline'); setDot('threat', 'offline'); setDot('ai', 'offline');
   }
 }
-
-// Check on load, then refresh every 60 seconds
 checkStatus();
 setInterval(checkStatus, 60000);
 
@@ -52,6 +48,17 @@ function animateScanSteps() {
   }, 600);
 }
 
+// ── FRIENDLY ERROR MESSAGES ───────────────────────────────────────────
+function friendlyError(status, msg) {
+  if (status === 504 || msg.includes('504')) return 'This site is blocking port scans — try a well-known domain like a news site or company.';
+  if (status === 429 || msg.includes('429')) return 'Rate limit reached — wait a minute and try again.';
+  if (status === 400 || msg.includes('400')) return 'Invalid URL — make sure it starts with http:// or https://';
+  if (status === 500 || msg.includes('500')) return 'Server error during scan — try again in a moment.';
+  if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) return 'Cannot reach Sentinel AI — check your connection.';
+  return `Scan failed: ${msg}`;
+}
+
+// ── ANALYZE ───────────────────────────────────────────────────────────
 async function analyzeLink() {
   const input = el('url-input');
   const errEl = el('url-error');
@@ -79,9 +86,11 @@ async function analyzeLink() {
 
   try {
     const response = await fetchPromise;
-    if (!response.ok) throw new Error(`Server returned ${response.status} — try again`);
-    const data = await response.json();
-    showResult(url, data);
+    if (!response.ok) {
+      const msg = friendlyError(response.status, `${response.status}`);
+      throw new Error(msg);
+    }
+    showResult(url, await response.json());
   } catch (err) {
     showError(err.message);
   } finally {
@@ -90,13 +99,13 @@ async function analyzeLink() {
   }
 }
 
+// ── SHOW RESULT ───────────────────────────────────────────────────────
 function showResult(url, data) {
   if (!data) { showError('Empty response from server'); return; }
-  const safe            = data.safe ?? true;
-  const riskLevel       = data.riskLevel ?? 'UNKNOWN';
-  const confidence      = data.confidence ?? 0;
-  const summary         = data.summary ?? 'No summary available.';
-  const vulnerabilityTable = data.vulnerability_table ?? null;
+  const safe      = data.safe      ?? true;
+  const riskLevel = data.riskLevel ?? 'UNKNOWN';
+  const confidence= data.confidence?? 0;
+  const summary   = data.summary   ?? 'No summary available.';
 
   lastResult = { url, ...data, timestamp: new Date() };
   const safeClass = safe ? 'safe' : riskLevel === 'MEDIUM' ? 'medium' : 'unsafe';
@@ -126,16 +135,7 @@ function showResult(url, data) {
   if (safeEl) safeEl.textContent = safe ? 'SAFE' : 'UNSAFE';
 
   const summaryEl = el('result-summary');
-  if (summaryEl) {
-    summaryEl.innerHTML = summary;
-    if (vulnerabilityTable && vulnerabilityTable.length > 0) {
-      summaryEl.innerHTML += `
-        <div style="margin-top:20px;padding:15px;background:#1a1a1a;border:1px solid #444;border-radius:8px;">
-          <h4 style="color:#ff4d4d;margin-top:0;">Infrastructure Vulnerability Data</h4>
-          <pre style="font-family:monospace;white-space:pre-wrap;color:#ddd;font-size:13px;">${vulnerabilityTable}</pre>
-        </div>`;
-    }
-  }
+  if (summaryEl) summaryEl.innerHTML = summary;
 
   const ts = el('scan-timestamp');
   if (ts) ts.textContent = 'Scanned at ' + new Date().toLocaleTimeString();
@@ -147,9 +147,46 @@ function showResult(url, data) {
 function showError(msg) {
   el('result-card')?.classList.remove('visible');
   const errEl = el('url-error');
-  if (errEl) { errEl.textContent = `Scan failed: ${msg}`; errEl.style.display = 'block'; }
+  if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; }
 }
 
+// ── DOWNLOAD RESULT ───────────────────────────────────────────────────
+function downloadResult() {
+  if (!lastResult) return;
+  const { url, safe, riskLevel, confidence, summary, cveCount, timestamp } = lastResult;
+  const text = [
+    '═══════════════════════════════════════',
+    '        SENTINEL AI — SCAN REPORT',
+    '═══════════════════════════════════════',
+    `URL:        ${url}`,
+    `Scanned:    ${new Date(timestamp).toLocaleString()}`,
+    `Status:     ${safe ? 'SAFE' : 'THREAT DETECTED'}`,
+    `Risk Level: ${riskLevel}`,
+    `Confidence: ${confidence}%`,
+    `CVEs Found: ${cveCount ?? 0}`,
+    '───────────────────────────────────────',
+    'SUMMARY',
+    '───────────────────────────────────────',
+    summary,
+    '═══════════════════════════════════════',
+    'sentinel-a-i.com',
+  ].join('\n');
+
+  const blob = new Blob([text], { type: 'text/plain' });
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = `sentinel-scan-${new URL(url).hostname}-${Date.now()}.txt`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ── COPY RESULT ───────────────────────────────────────────────────────
+function copyResult() {
+  if (!lastResult) return;
+  navigator.clipboard.writeText(JSON.stringify(lastResult, null, 2));
+}
+
+// ── HISTORY ───────────────────────────────────────────────────────────
 function addToHistory(url, riskLevel, safe) {
   scanHistory.unshift({ url, riskLevel, safe, time: new Date() });
   if (scanHistory.length > 10) scanHistory.pop();
@@ -169,11 +206,6 @@ function renderHistory() {
     div.innerHTML = `<div class="history-left"><div><div class="history-url">${item.url}</div><div class="history-time">${item.time.toLocaleTimeString()}</div></div></div><span class="risk-pill ${item.riskLevel}" style="font-size:0.7rem;padding:2px 10px">${item.riskLevel}</span>`;
     list.appendChild(div);
   });
-}
-
-function copyResult() {
-  if (!lastResult) return;
-  navigator.clipboard.writeText(JSON.stringify(lastResult, null, 2));
 }
 
 const urlInput = el('url-input');
