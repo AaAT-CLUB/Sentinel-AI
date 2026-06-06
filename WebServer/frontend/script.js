@@ -14,8 +14,6 @@ const CHECK_LABELS = {
   'A07_Auth_Failures':            'A07',
 };
 
-// Time-based phases that match the actual backend flow
-// at = ms after scan starts, text = what's actually happening
 const SCAN_PHASES = [
   { at: 0,     text: 'Resolving domain...' },
   { at: 2000,  text: 'Scanning open ports...' },
@@ -48,8 +46,10 @@ async function checkStatus() {
     setDot('api',    s.api       ? 'online' : 'offline');
     setDot('threat', s.threat_db ? 'online' : 'offline');
     setDot('ai',     s.ai_engine ? 'online' : 'offline');
+    setDot('data',   s.data_api  ? 'online' : 'offline');
   } catch {
-    setDot('api', 'offline'); setDot('threat', 'offline'); setDot('ai', 'offline');
+    setDot('api', 'offline'); setDot('threat', 'offline');
+    setDot('ai',  'offline'); setDot('data',   'offline');
   }
 }
 checkStatus();
@@ -72,7 +72,6 @@ async function fetchCompliance(url) {
     const r = await fetch(`${COMPLIANCE_ENDPOINT}?url=${encodeURIComponent(url)}`);
     if (!r.ok) throw new Error();
     const data = await r.json();
-
     if (scoreEl) {
       scoreEl.textContent = data.score;
       scoreEl.style.color = data.score >= 80 ? '#22c55e' : data.score >= 60 ? '#eab308' : '#ef4444';
@@ -88,35 +87,28 @@ async function fetchCompliance(url) {
   }
 }
 
-// ── SCAN STEP ANIMATION — time-based, reflects actual backend phases ──
+// ── SCAN STEPS ────────────────────────────────────────────────────────
 function startScanSteps() {
   const stepEl = el('scan-step');
   if (!stepEl) return;
   if (stepTimer) clearTimeout(stepTimer);
-
   const start = performance.now();
-
   function tick() {
     const elapsed = performance.now() - start;
-    // Find the most recent phase that has started
     let current = SCAN_PHASES[0];
     for (const phase of SCAN_PHASES) {
       if (elapsed >= phase.at) current = phase;
       else break;
     }
     stepEl.textContent = current.text;
-    // Schedule next check at the next phase boundary
     const next = SCAN_PHASES.find(p => p.at > elapsed);
     if (next) stepTimer = setTimeout(tick, next.at - elapsed);
   }
-
   tick();
 }
 
-function stopScanSteps(finalText) {
+function stopScanSteps() {
   if (stepTimer) { clearTimeout(stepTimer); stepTimer = null; }
-  const stepEl = el('scan-step');
-  if (stepEl && finalText) stepEl.textContent = finalText;
 }
 
 // ── FRIENDLY ERROR MESSAGES ───────────────────────────────────────────
@@ -150,7 +142,6 @@ async function analyzeLink() {
   if (btn) btn.disabled = true;
   el('scan-state')?.classList.add('visible');
 
-  // Start fetch immediately, kick off time-based step animation in parallel
   const fetchPromise = fetch(API_ENDPOINT, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -215,12 +206,11 @@ function showError(msg) {
   if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; }
 }
 
-// ── DOWNLOAD RESULT ───────────────────────────────────────────────────
+// ── DOWNLOAD ─────────────────────────────────────────────────────────
 function downloadResult() {
   if (!lastResult) return;
   const { url, safe, riskLevel, confidence, summary, cveCount, timestamp } = lastResult;
-  const scoreEl = el('compliance-score');
-  const owaspScore = scoreEl ? scoreEl.textContent : '—';
+  const owaspScore = el('compliance-score')?.textContent ?? '—';
   const text = [
     '═══════════════════════════════════════',
     '        SENTINEL AI — SCAN REPORT',
@@ -248,7 +238,6 @@ function downloadResult() {
   URL.revokeObjectURL(a.href);
 }
 
-// ── COPY RESULT ───────────────────────────────────────────────────────
 function copyResult() {
   if (!lastResult) return;
   navigator.clipboard.writeText(JSON.stringify(lastResult, null, 2));
