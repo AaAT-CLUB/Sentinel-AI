@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Sentinel AI — Threat Scanner</title>
-  <link rel="stylesheet" href="styles.css?v=9" />
+  <link rel="stylesheet" href="styles.css?v=10" />
 </head>
 <body>
 
@@ -25,6 +25,10 @@
     <div class="status-item" style="display:flex;align-items:center;gap:8px;">
       <div class="status-dot checking" id="dot-ai"></div>
       <span>AI Engine</span>
+    </div>
+    <div class="status-item" style="display:flex;align-items:center;gap:8px;">
+      <div class="status-dot checking" id="dot-data"></div>
+      <span>Data API</span>
     </div>
   </div>
 </nav>
@@ -98,8 +102,6 @@
           <div class="result-row-label" style="margin-bottom:10px">Summary</div>
           <div class="summary-box" id="result-summary"></div>
         </div>
-
-        <!-- OWASP Compliance — loads in parallel after main result -->
         <div class="compliance-section" id="compliance-section" style="display:none;">
           <div class="compliance-header">
             <span class="result-row-label">OWASP Compliance</span>
@@ -110,7 +112,6 @@
           </div>
           <div class="compliance-checks" id="compliance-checks"></div>
         </div>
-
       </div>
       <div class="result-footer">
         <span class="scan-timestamp" id="scan-timestamp"></span>
@@ -131,7 +132,7 @@
 </div>
 
 <footer>Sentinel AI · AaAT-CLUB · Capstone 2026</footer>
-<script src="script.js?v=5"></script>
+<script src="script.js?v=6"></script>
 
 <script>
 const RADAR_PERIOD = 4000;
