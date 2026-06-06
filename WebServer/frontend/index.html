@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Sentinel AI — Threat Scanner</title>
-  <link rel="stylesheet" href="styles.css?v=8" />
+  <link rel="stylesheet" href="styles.css?v=9" />
 </head>
 <body>
 
@@ -98,6 +98,19 @@
           <div class="result-row-label" style="margin-bottom:10px">Summary</div>
           <div class="summary-box" id="result-summary"></div>
         </div>
+
+        <!-- OWASP Compliance — loads in parallel after main result -->
+        <div class="compliance-section" id="compliance-section" style="display:none;">
+          <div class="compliance-header">
+            <span class="result-row-label">OWASP Compliance</span>
+            <div class="compliance-score-display">
+              <span id="compliance-score">—</span>
+              <span class="compliance-score-max">/100</span>
+            </div>
+          </div>
+          <div class="compliance-checks" id="compliance-checks"></div>
+        </div>
+
       </div>
       <div class="result-footer">
         <span class="scan-timestamp" id="scan-timestamp"></span>
@@ -118,10 +131,9 @@
 </div>
 
 <footer>Sentinel AI · AaAT-CLUB · Capstone 2026</footer>
-<script src="script.js?v=4"></script>
+<script src="script.js?v=5"></script>
 
 <script>
-// ── RADAR + DOT ANIMATION ─────────────────────────────────────────────
 const RADAR_PERIOD = 4000;
 const SWEEP_WIDTH  = 48;
 const DOT_DEFS = [
