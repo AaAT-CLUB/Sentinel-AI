@@ -34,8 +34,8 @@ app.add_middleware(
 # Route registrations
 app.include_router(analyze_router, prefix="/api")
 
-# Configuration for Team 2 Integration
-TEAM2_API_KEY = os.getenv("TEAM2_API_KEY", "0ed02d19822ef098ce270715db907cb5ad5b6b73c75db47afad5ff6897642463")
+# Configuration for Team 2 Integration — loaded from .env only
+TEAM2_API_KEY = os.getenv("TEAM2_API_KEY", "")
 TEAM2_BASE_URL = os.getenv("TEAM2_API_BASE_URL", "https://sentinel-a-i.com/data-api")
 
 @app.get("/health")
