@@ -4,7 +4,7 @@ const STATUS_ENDPOINT     = IS_DEV ? 'http://localhost:8000/api/status'     : '/
 const COMPLIANCE_ENDPOINT = IS_DEV ? 'http://localhost:8000/api/compliance' : '/api/compliance';
 let scanHistory = [];
 let lastResult  = null;
-const scanSteps = ['Resolving domain...', 'Checking threat databases...', 'Running AI analysis...', 'Generating report...'];
+let stepTimer   = null;
 
 const CHECK_LABELS = {
   'A01_Broken_Access_Control':    'A01',
@@ -13,6 +13,17 @@ const CHECK_LABELS = {
   'A05_Security_Misconfiguration':'A05',
   'A07_Auth_Failures':            'A07',
 };
+
+// Time-based phases that match the actual backend flow
+// at = ms after scan starts, text = what's actually happening
+const SCAN_PHASES = [
+  { at: 0,     text: 'Resolving domain...' },
+  { at: 2000,  text: 'Scanning open ports...' },
+  { at: 10000, text: 'Detecting service versions...' },
+  { at: 22000, text: 'Checking CVE databases...' },
+  { at: 34000, text: 'Running AI threat analysis...' },
+  { at: 50000, text: 'Finalizing results...' },
+];
 
 function el(id) { return document.getElementById(id); }
 
@@ -77,17 +88,35 @@ async function fetchCompliance(url) {
   }
 }
 
-// ── SCAN ANIMATION ────────────────────────────────────────────────────
-function animateScanSteps() {
+// ── SCAN STEP ANIMATION — time-based, reflects actual backend phases ──
+function startScanSteps() {
   const stepEl = el('scan-step');
   if (!stepEl) return;
-  let i = 0;
-  stepEl.textContent = scanSteps[0];
-  const iv = setInterval(() => {
-    i++;
-    if (i < scanSteps.length) { stepEl.textContent = scanSteps[i]; }
-    else { stepEl.textContent = 'Finalizing results...'; clearInterval(iv); }
-  }, 600);
+  if (stepTimer) clearTimeout(stepTimer);
+
+  const start = performance.now();
+
+  function tick() {
+    const elapsed = performance.now() - start;
+    // Find the most recent phase that has started
+    let current = SCAN_PHASES[0];
+    for (const phase of SCAN_PHASES) {
+      if (elapsed >= phase.at) current = phase;
+      else break;
+    }
+    stepEl.textContent = current.text;
+    // Schedule next check at the next phase boundary
+    const next = SCAN_PHASES.find(p => p.at > elapsed);
+    if (next) stepTimer = setTimeout(tick, next.at - elapsed);
+  }
+
+  tick();
+}
+
+function stopScanSteps(finalText) {
+  if (stepTimer) { clearTimeout(stepTimer); stepTimer = null; }
+  const stepEl = el('scan-step');
+  if (stepEl && finalText) stepEl.textContent = finalText;
 }
 
 // ── FRIENDLY ERROR MESSAGES ───────────────────────────────────────────
@@ -121,18 +150,21 @@ async function analyzeLink() {
   if (btn) btn.disabled = true;
   el('scan-state')?.classList.add('visible');
 
+  // Start fetch immediately, kick off time-based step animation in parallel
   const fetchPromise = fetch(API_ENDPOINT, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ url })
   });
-  animateScanSteps();
+  startScanSteps();
 
   try {
     const response = await fetchPromise;
     if (!response.ok) { throw new Error(friendlyError(response.status, `${response.status}`)); }
+    stopScanSteps();
     showResult(url, await response.json());
   } catch (err) {
+    stopScanSteps();
     showError(err.message);
   } finally {
     if (btn) btn.disabled = false;
@@ -174,8 +206,6 @@ function showResult(url, data) {
 
   el('result-card')?.classList.add('visible');
   addToHistory(url, riskLevel, safe);
-
-  // Kick off compliance check in parallel — results appear in the card as they arrive
   fetchCompliance(url);
 }
 
