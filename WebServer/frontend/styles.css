@@ -26,8 +26,6 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
 
 /* ── HERO ── */
 .hero { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 70px 48px 56px; overflow: hidden; min-height: 380px; }
-
-/* ── RINGS CONTAINER ── */
 .rings-container { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 700px; height: 700px; pointer-events: none; }
 .ring { position: absolute; top: 50%; left: 50%; border-radius: 50%; border: 1px solid rgba(124,58,237,0.15); }
 .ring::after { content: ''; position: absolute; width: 5px; height: 5px; background: #7c3aed; border-radius: 50%; top: -2.5px; left: 50%; margin-left: -2.5px; box-shadow: 0 0 6px #7c3aed; }
@@ -38,16 +36,10 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
 .ring-5 { width: 600px; height: 600px; animation: spin-cw  35s linear infinite; border-color: rgba(124,58,237,0.05); border-style: dashed; }
 @keyframes spin-cw  { from{transform:translate(-50%,-50%) rotate(0deg);}   to{transform:translate(-50%,-50%) rotate(360deg);} }
 @keyframes spin-ccw { from{transform:translate(-50%,-50%) rotate(0deg);}   to{transform:translate(-50%,-50%) rotate(-360deg);} }
-
-/* ── RADAR SWEEP ── */
 .radar-sweep { position: absolute; top: 50%; left: 50%; width: 600px; height: 600px; border-radius: 50%; overflow: hidden; pointer-events: none; }
 .radar-sweep::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: conic-gradient(from 0deg, transparent 0deg, rgba(124,58,237,0.14) 60deg, transparent 60deg); }
-
-/* ── DOTS ── */
 .dots-container { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 700px; height: 700px; pointer-events: none; }
 .ring-dot { position: absolute; width: 5px; height: 5px; background: rgba(124,58,237,0.12); border-radius: 50%; transform: translate(-50%, -50%); }
-
-/* ── PARTICLES ── */
 .particles { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; }
 .particle { position: absolute; width: 2px; height: 2px; background: #7c3aed; border-radius: 50%; box-shadow: 0 0 4px #7c3aed; animation: float-up linear infinite; opacity: 0; }
 .particle:nth-child(1)  { left: 3%;  animation-duration: 7s;  animation-delay: 0s;   }
@@ -61,8 +53,6 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
 .particle:nth-child(9)  { left: 97%; animation-duration: 6s;  animation-delay: 3.5s; }
 .particle:nth-child(10) { left: 88%; animation-duration: 10s; animation-delay: 0s;   }
 @keyframes float-up { 0%{transform:translateY(400px);opacity:0;} 10%{opacity:0.9;} 90%{opacity:0.3;} 100%{transform:translateY(-60px);opacity:0;} }
-
-/* ── HERO TEXT ── */
 .hero-title { position: relative; font-size: 3.4rem; font-weight: 800; color: #fff; line-height: 1.1; letter-spacing: -1.5px; max-width: 680px; margin-bottom: 18px; text-shadow: 0 0 80px rgba(124,58,237,0.3); }
 .hero-title span { color: #7c3aed; }
 .hero-sub { position: relative; color: #555; font-size: 1rem; max-width: 440px; line-height: 1.6; }
@@ -133,6 +123,19 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
 .scan-timestamp { font-size: 0.7rem; color: #2a2a2a; font-family: 'Courier New', monospace; }
 .copy-btn { background: transparent; border: 1px solid #1e1e1e; border-radius: 6px; padding: 5px 12px; color: #444; font-size: 0.72rem; cursor: pointer; transition: border-color 0.2s, color 0.2s; }
 .copy-btn:hover { border-color: #7c3aed; color: #7c3aed; }
+
+/* ── OWASP COMPLIANCE ── */
+.compliance-section { flex-direction: column; gap: 10px; padding-top: 16px; border-top: 1px solid #161616; }
+.compliance-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; }
+.compliance-score-display { display: flex; align-items: baseline; gap: 3px; }
+.compliance-score-display span:first-child { font-size: 1.5rem; font-weight: 800; transition: color 0.4s; }
+.compliance-score-max { font-size: 0.72rem; color: #333; }
+.compliance-checks { display: flex; gap: 6px; flex-wrap: wrap; }
+.compliance-check { font-size: 0.68rem; padding: 3px 10px; border-radius: 5px; font-weight: 600; letter-spacing: 0.3px; cursor: default; transition: opacity 0.2s; }
+.compliance-check.pass    { background: rgba(34,197,94,0.08);  color: #22c55e; border: 1px solid rgba(34,197,94,0.2); }
+.compliance-check.fail    { background: rgba(239,68,68,0.08);  color: #ef4444; border: 1px solid rgba(239,68,68,0.2); }
+.compliance-check.loading { background: #161616; color: #2a2a2a; border: 1px solid #1e1e1e; animation: cpulse 1.4s ease-in-out infinite; }
+@keyframes cpulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
 
 /* ── HISTORY ── */
 .section { background: #111; border: 1px solid #1a1a1a; border-radius: 16px; padding: 24px; margin-top: 12px; }
