@@ -25,24 +25,25 @@ class AnalyzeResponse(BaseModel):
 
 @router.get("/status")
 async def status():
-    # Threat DB — ping NVD API
     threat_db = False
     try:
-        r = req.get(
-            "https://services.nvd.nist.gov/rest/json/cves/2.0?resultsPerPage=1",
-            timeout=5
-        )
+        r = req.get("https://services.nvd.nist.gov/rest/json/cves/2.0?resultsPerPage=1", timeout=5)
         threat_db = r.status_code == 200
     except Exception:
         pass
 
-    # AI Engine — check Claude status page
     ai_engine = False
     try:
         r = req.get("https://status.claude.com/api/v2/status.json", timeout=5)
-        data = r.json()
-        indicator = data.get("status", {}).get("indicator", "major")
+        indicator = r.json().get("status", {}).get("indicator", "major")
         ai_engine = indicator in ("none", "minor")
+    except Exception:
+        pass
+
+    data_api = False
+    try:
+        r = req.get("https://sentinel-a-i.com/data-api/health", timeout=5)
+        data_api = r.status_code == 200 and r.json().get("status") == "ok"
     except Exception:
         pass
 
@@ -50,6 +51,7 @@ async def status():
         "api":       True,
         "threat_db": threat_db,
         "ai_engine": ai_engine,
+        "data_api":  data_api,
     }
 
 
@@ -60,7 +62,6 @@ async def analyze(request: Request, body: AnalyzeRequest):
     if not url.startswith(("http://", "https://")):
         raise HTTPException(status_code=400, detail="URL must start with http:// or https://")
     try:
-        # analyzer.py already runs the nmap scan internally — no need to call scan_target again
         return analyze_url(url)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
