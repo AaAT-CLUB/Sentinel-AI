@@ -6,6 +6,7 @@
   "scripts": {
     "start": "ts-node-dev --respawn --transpile-only src/main.ts",
     "build": "tsc -p tsconfig.json",
+    "test": "node test/main-listen-config.test.js",
     "start:prod": "node dist/main.js",
     "import:cves": "node import-cves.js"
   },
