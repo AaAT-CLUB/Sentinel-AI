@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
-import { APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { Pool } from 'pg';
+import { AllExceptionsFilter } from './all-exceptions.filter';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { LoggingInterceptor } from './logging.interceptor';
@@ -21,6 +22,10 @@ import { LogsService } from './logs.service';
   providers: [
     AppService,
     LogsService,
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionsFilter,
+    },
     {
       provide: APP_INTERCEPTOR,
       useClass: LoggingInterceptor,
