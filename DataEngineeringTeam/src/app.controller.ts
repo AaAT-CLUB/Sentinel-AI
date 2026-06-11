@@ -1,4 +1,4 @@
-import { Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { AppService } from './app.service';
 import { ApiKeyGuard } from './auth.guard';
@@ -26,13 +26,30 @@ export class AppController {
 
   // 20 reads per IP per minute to prevent DB read overload
   @Get('vulnerabilities')
-  @UseGuards(ThrottlerGuard)
+  @UseGuards(ApiKeyGuard, ThrottlerGuard)
   @Throttle({ 'db-default': { ttl: 60_000, limit: 20 } })
-  async getVulnerabilities() {
-    return this.appService.getVulnerabilities();
+  async getVulnerabilities(@Query() query: Record<string, string>) {
+    return this.appService.getVulnerabilities(query);
   }
 
-  // 5 imports per IP per minute — expensive: hits NVD API + bulk DB write
+  @Get('vulnerabilities/:cveId')
+  @UseGuards(ApiKeyGuard, ThrottlerGuard)
+  @Throttle({ 'db-default': { ttl: 60_000, limit: 20 } })
+  async getVulnerabilityByCveId(@Param('cveId') cveId: string) {
+    return this.appService.getVulnerabilityByCveId(cveId);
+  }
+
+  @Post('vulnerabilities')
+  @UseGuards(ApiKeyGuard, ThrottlerGuard)
+  @Throttle({ 'db-default': { ttl: 60_000, limit: 10 } })
+  async createVulnerability(@Body() body: unknown) {
+    if (Array.isArray(body)) {
+      return this.appService.createVulnerabilities(body);
+    }
+    return this.appService.createVulnerability(body);
+  }
+
+  // 5 imports per IP per minute - expensive: hits NVD API + bulk DB write
   @Post('import-cves')
   @UseGuards(ApiKeyGuard, ThrottlerGuard)
   @Throttle({ 'db-default': { ttl: 60_000, limit: 5 } })

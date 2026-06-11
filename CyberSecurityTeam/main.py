@@ -1,5 +1,4 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import APIRouter
 import re
 
 # ── ENGINE INTEGRATION ────────────────────────────────────────────────
@@ -7,19 +6,10 @@ import re
 # input cleaning, Nmap resource locking, and specific domain fallbacks.
 from CyberSecurityTeam.scanner_shell import scan_target
 
-app = FastAPI()
+# Initialize the router instance for your subsystem
+router = APIRouter()
 
-# Enable CORS so Team 1's frontend layout can talk to this backend port
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
-@app.post("/api/analyze")
+@router.post("/analyze")
 def run_full_scan(payload: dict):
     """
     Main API endpoint intercepted from Team 1's interface.
@@ -89,9 +79,3 @@ def run_full_scan(payload: dict):
     
     # 5. Hand the fully secure, presentation-ready object bundle back to the frontend
     return processed_results
-
-
-if __name__ == "__main__":
-    import uvicorn
-    # Runs the local hosting stream on port 8000
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)

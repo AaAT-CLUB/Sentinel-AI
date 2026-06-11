@@ -18,6 +18,18 @@ Columns:
 - severity
 - published_date
 
+Expected schema:
+
+```sql
+CREATE TABLE IF NOT EXISTS vulnerabilities (
+  id SERIAL PRIMARY KEY,
+  cve_id VARCHAR(50) UNIQUE NOT NULL,
+  description TEXT,
+  severity VARCHAR(20),
+  published_date TIMESTAMP
+);
+```
+
 ## Setup
 
 Install dependencies:
@@ -30,8 +42,12 @@ Create a `.env` file:
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=sentinel_dev
-DB_USER=postgres
+DB_USER=admin
 DB_PASSWORD=your_password_here
+API_KEY=your_api_key_here
+NVD_API_KEY=
+HOST=127.0.0.1
+PORT=3000
 ```
 
 ### Run the existing CVE import script
@@ -50,10 +66,26 @@ DB_PASSWORD=your_password_here
 
 - `GET /` — API health and welcome message
 - `GET /health` — health status
-- `GET /vulnerabilities` — list imported vulnerabilities
-- `POST /import-cves` — fetch CVEs from NVD and insert into the database
+- `GET /vulnerabilities` — list imported vulnerabilities. Supports optional filters: `limit`, `cve_id`, `keyword`, `description`, `severity`, `published_from`, and `published_to`.
+- `GET /vulnerabilities/:cve_id` — fetch one vulnerability by exact CVE ID.
+- `POST /vulnerabilities` — insert one vulnerability object or an array of vulnerability objects. Requires an `x-api-key` header matching `API_KEY` and deduplicates by `cve_id`.
+- `POST /import-cves` — fetch CVEs from NVD and insert into the database. Requires an `x-api-key` header matching `API_KEY`.
+
+On the production DigitalOcean droplet, Nginx exposes this API under `/data-api/*` so it does not conflict with the existing FastAPI service under `/api/*`.
+
+Examples:
+
+```bash
+curl https://sentinel-a-i.com/data-api/health
+curl "https://sentinel-a-i.com/data-api/vulnerabilities?severity=HIGH&limit=250"
+curl https://sentinel-a-i.com/data-api/vulnerabilities/CVE-1999-0095
+curl -X POST https://sentinel-a-i.com/data-api/import-cves -H "x-api-key: $API_KEY"
+```
+
+For team-facing usage details, see [API_USAGE.md](API_USAGE.md).
 
 ## Notes
 
 - The NestJS app uses Fastify as the HTTP adapter.
-- The API listens on port `3000` by default.
+- The API listens on `PORT` from the environment, or port `3000` by default.
+- On the production droplet, set `HOST=127.0.0.1` so the API is reachable through Nginx but not exposed directly on the public network.
