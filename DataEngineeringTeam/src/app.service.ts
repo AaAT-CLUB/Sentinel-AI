@@ -48,7 +48,7 @@ export class AppService {
       throw new InternalServerErrorException(`NVD API returned ${response.status}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as { vulnerabilities?: any[] };
     const vulnerabilities: any[] = data.vulnerabilities || [];
 
     if (vulnerabilities.length === 0) {
