@@ -2,10 +2,14 @@ import { Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { AppService } from './app.service';
 import { ApiKeyGuard } from './auth.guard';
+import { LogsService } from './logs.service';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(
+    private readonly appService: AppService,
+    private readonly logsService: LogsService,
+  ) {}
 
   @Get()
   getRoot() {
@@ -34,5 +38,12 @@ export class AppController {
   @Throttle({ 'db-default': { ttl: 60_000, limit: 5 } })
   async importCves() {
     return this.appService.importCVEs();
+  }
+
+  // Admin-only: returns the last 1000 request log entries
+  @Get('logs')
+  @UseGuards(ApiKeyGuard)
+  getLogs() {
+    return this.logsService.getAll();
   }
 }
