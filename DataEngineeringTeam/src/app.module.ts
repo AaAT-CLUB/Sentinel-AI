@@ -1,11 +1,19 @@
 import { Module } from '@nestjs/common';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { Pool } from 'pg';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
-// Root module for the NestJS application. It defines controllers and providers.
 @Module({
-  imports: [],
+  imports: [
+    ThrottlerModule.forRoot([
+      {
+        name: 'db-default',
+        ttl: 60_000,
+        limit: 60,
+      },
+    ]),
+  ],
   controllers: [AppController],
   providers: [
     AppService,
