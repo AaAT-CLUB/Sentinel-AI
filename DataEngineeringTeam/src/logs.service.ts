@@ -7,6 +7,7 @@ export interface LogEntry {
   statusCode: number;
   durationMs: number;
   ip: string;
+  apiKeyPrefix: string;
 }
 
 @Injectable()

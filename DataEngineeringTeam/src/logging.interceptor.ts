@@ -23,6 +23,7 @@ export class LoggingInterceptor implements NestInterceptor {
           statusCode: response.statusCode,
           durationMs,
           ip: request.ip ?? request.headers['x-forwarded-for'] ?? 'unknown',
+          apiKeyPrefix: request.apiKey?.prefix ?? 'NONE',
         };
         this.logger.log(`${entry.method} ${entry.url} ${entry.statusCode} ${durationMs}ms`);
         this.logsService.push(entry);
