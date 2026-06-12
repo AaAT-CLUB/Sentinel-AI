@@ -8,7 +8,7 @@
     "build": "tsc -p tsconfig.json",
     "start:prod": "node dist/main.js",
     "import:cves": "node import-cves.js",
-    "test": "npm run build && node test/app.service.test.js && node test/main-listen-config.test.js"
+    "test": "npm run build && node test/app.service.test.js && node test/main-listen-config.test.js && node test/auth-global-config.test.js"
   },
   "keywords": [],
   "author": "",

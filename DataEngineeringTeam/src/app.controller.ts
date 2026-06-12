@@ -1,8 +1,8 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
-import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AppService } from './app.service';
-import { ApiKeyGuard } from './auth.guard';
 import { LogsService } from './logs.service';
+import { Public } from './public.decorator';
 
 @Controller()
 export class AppController {
@@ -12,36 +12,34 @@ export class AppController {
   ) {}
 
   @Get()
+  @Throttle({ 'db-default': { ttl: 60_000, limit: 10 } })
   getRoot() {
     return { message: 'Sentinel AI Data Engineering API' };
   }
 
   // 30 health checks per IP per minute
+  @Public()
   @Get('health')
-  @UseGuards(ThrottlerGuard)
-  @Throttle({ 'db-default': { ttl: 60_000, limit: 30 } })
+  @Throttle({ 'db-default': { ttl: 60_000, limit: 10 } })
   getHealth() {
     return this.appService.getHealth();
   }
 
   // 20 reads per IP per minute to prevent DB read overload
   @Get('vulnerabilities')
-  @UseGuards(ApiKeyGuard, ThrottlerGuard)
-  @Throttle({ 'db-default': { ttl: 60_000, limit: 20 } })
+  @Throttle({ 'db-default': { ttl: 60_000, limit: 30 } })
   async getVulnerabilities(@Query() query: Record<string, string>) {
     return this.appService.getVulnerabilities(query);
   }
 
   @Get('vulnerabilities/:cveId')
-  @UseGuards(ApiKeyGuard, ThrottlerGuard)
-  @Throttle({ 'db-default': { ttl: 60_000, limit: 20 } })
+  @Throttle({ 'db-default': { ttl: 60_000, limit: 30 } })
   async getVulnerabilityByCveId(@Param('cveId') cveId: string) {
     return this.appService.getVulnerabilityByCveId(cveId);
   }
 
   @Post('vulnerabilities')
-  @UseGuards(ApiKeyGuard, ThrottlerGuard)
-  @Throttle({ 'db-default': { ttl: 60_000, limit: 10 } })
+  @Throttle({ 'db-default': { ttl: 60_000, limit: 30 } })
   async createVulnerability(@Body() body: unknown) {
     if (Array.isArray(body)) {
       return this.appService.createVulnerabilities(body);
@@ -51,7 +49,6 @@ export class AppController {
 
   // 5 imports per IP per minute - expensive: hits NVD API + bulk DB write
   @Post('import-cves')
-  @UseGuards(ApiKeyGuard, ThrottlerGuard)
   @Throttle({ 'db-default': { ttl: 60_000, limit: 5 } })
   async importCves() {
     return this.appService.importCVEs();
@@ -59,7 +56,6 @@ export class AppController {
 
   // Admin-only: returns the last 1000 request log entries
   @Get('logs')
-  @UseGuards(ApiKeyGuard)
   getLogs() {
     return this.logsService.getAll();
   }

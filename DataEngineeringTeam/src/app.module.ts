@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common';
-import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { Pool } from 'pg';
 import { AllExceptionsFilter } from './all-exceptions.filter';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { ApiKeyGuard } from './auth.guard';
 import { LoggingInterceptor } from './logging.interceptor';
 import { LogsService } from './logs.service';
 
@@ -22,6 +23,14 @@ import { LogsService } from './logs.service';
   providers: [
     AppService,
     LogsService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ApiKeyGuard,
+    },
     {
       provide: APP_FILTER,
       useClass: AllExceptionsFilter,
