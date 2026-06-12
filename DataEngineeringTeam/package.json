@@ -12,7 +12,7 @@
     "api-key:create": "node scripts/api-keys.js create",
     "api-key:list": "node scripts/api-keys.js list",
     "api-key:revoke": "node scripts/api-keys.js revoke",
-    "test": "npm run build && node test/app.service.test.js && node test/main-listen-config.test.js && node test/auth-global-config.test.js && node test/api-key-hardening.test.js && node test/api-key-scripts.test.js && node test/logging-prefix.test.js"
+    "test": "npm run build && node test/app.service.test.js && node test/main-listen-config.test.js && node test/auth-global-config.test.js && node test/api-key-hardening.test.js && node test/api-key-scripts.test.js && node test/logging-prefix.test.js && node test/durable-logs.test.js"
   },
   "keywords": [],
   "author": "",

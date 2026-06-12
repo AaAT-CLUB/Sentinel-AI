@@ -60,10 +60,10 @@ export class AppController {
     return this.appService.importCVEs();
   }
 
-  // Admin-only: returns the last 1000 request log entries
+  // Admin-only: returns persisted request log entries
   @Get('logs')
   @RequireScopes('admin:logs')
-  getLogs() {
-    return this.logsService.getAll();
+  getLogs(@Query() query: Record<string, string>) {
+    return this.logsService.getAll(query);
   }
 }
