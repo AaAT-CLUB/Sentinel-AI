@@ -1,22 +1,23 @@
 # Sentinel AI - Data Engineering Team
 
-## Week 1 Setup
+This folder contains the PostgreSQL setup notes, NVD CVE import tooling, and the NestJS/Fastify Data API managed by the Data Engineering team.
 
-This folder contains the PostgreSQL database setup, Node.js NVD CVE import script, and a NestJS API using Fastify.
+## Ownership
+
+Data Engineering owns:
+
+- the PostgreSQL vulnerability data model;
+- the Data API in this folder;
+- Data API authentication and key management;
+- Droplet-side Data API service configuration.
+
+Other teams should integrate through the documented API and request scoped API keys from Data Engineering.
 
 ## Database
 
-Database name: sentinel_dev
+Database name: `sentinel_dev`
 
-Table: vulnerabilities
-
-Columns:
-
-- id
-- cve_id
-- description
-- severity
-- published_date
+Primary table: `vulnerabilities`
 
 Expected schema:
 
@@ -30,62 +31,147 @@ CREATE TABLE IF NOT EXISTS vulnerabilities (
 );
 ```
 
-## Setup
+API keys are stored in `api_keys` after running:
+
+```bash
+npm run db:migrate
+```
+
+Raw API keys are never stored in PostgreSQL.
+
+## Local Setup
 
 Install dependencies:
 
-`npm install`
-
-Create a `.env` file:
-
+```bash
+npm install
 ```
+
+Create a local `.env` file:
+
+```text
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=sentinel_dev
 DB_USER=admin
 DB_PASSWORD=your_password_here
-API_KEY=your_api_key_here
+API_KEY_PEPPER=local-development-pepper
 NVD_API_KEY=
 HOST=127.0.0.1
 PORT=3000
 ```
 
-### Run the existing CVE import script
+Build and test:
 
-`npm run import:cves`
+```bash
+npm test
+```
 
-### Start the API in development
+Start the API in development:
 
-`npm start`
+```bash
+npm start
+```
 
-### Build the API for production
+Build for production:
 
-`npm run build`
+```bash
+npm run build
+```
+
+## Key Management
+
+Create or verify the API key table:
+
+```bash
+npm run db:migrate
+```
+
+Create a scoped key:
+
+```bash
+npm run api-key:create -- --owner data-team-user --scopes read:vulnerabilities
+```
+
+List keys:
+
+```bash
+npm run api-key:list
+```
+
+Revoke a key:
+
+```bash
+npm run api-key:revoke -- --prefix <prefix>
+```
+
+Store the raw key in the team password manager when it is created. It is shown once and cannot be recovered from the database.
 
 ## API Endpoints
 
-- `GET /` — API health and welcome message
-- `GET /health` — health status
-- `GET /vulnerabilities` — list imported vulnerabilities. Supports optional filters: `limit`, `cve_id`, `keyword`, `description`, `severity`, `published_from`, and `published_to`.
-- `GET /vulnerabilities/:cve_id` — fetch one vulnerability by exact CVE ID.
-- `POST /vulnerabilities` — insert one vulnerability object or an array of vulnerability objects. Requires an `x-api-key` header matching `API_KEY` and deduplicates by `cve_id`.
-- `POST /import-cves` — fetch CVEs from NVD and insert into the database. Requires an `x-api-key` header matching `API_KEY`.
+Only `GET /health` is unauthenticated. All other endpoints require `x-api-key`.
 
-On the production DigitalOcean droplet, Nginx exposes this API under `/data-api/*` so it does not conflict with the existing FastAPI service under `/api/*`.
+| Method | Path | Scope |
+|---|---|---|
+| `GET` | `/health` | none |
+| `GET` | `/` | `read:vulnerabilities` |
+| `GET` | `/vulnerabilities` | `read:vulnerabilities` |
+| `GET` | `/vulnerabilities/:cve_id` | `read:vulnerabilities` |
+| `POST` | `/vulnerabilities` | `write:vulnerabilities` |
+| `POST` | `/import-cves` | `import:cves` |
+| `GET` | `/logs` | `admin:logs` |
 
-Examples:
+For full usage details, see [API_USAGE.md](API_USAGE.md).
 
-```bash
-curl https://sentinel-a-i.com/data-api/health
-curl "https://sentinel-a-i.com/data-api/vulnerabilities?severity=HIGH&limit=250"
-curl https://sentinel-a-i.com/data-api/vulnerabilities/CVE-1999-0095
-curl -X POST https://sentinel-a-i.com/data-api/import-cves -H "x-api-key: $API_KEY"
+## Production Access Model
+
+The production Data API runs on the DigitalOcean Droplet as `sentinel-data-api.service`.
+
+Runtime expectations:
+
+- NestJS binds to `127.0.0.1:3000`.
+- PostgreSQL binds to `127.0.0.1:5432`.
+- Public internet access to `/data-api/*` is intentionally removed.
+- Team laptops access the API through Tailscale.
+- Same-Droplet backend services can call `http://127.0.0.1:3000`.
+
+Team laptop URL shape:
+
+```text
+https://sentinel-ai-data.<tailnet>.ts.net/data-api
 ```
 
-For team-facing usage details, see [API_USAGE.md](API_USAGE.md).
+Replace `<tailnet>` with the team Tailscale MagicDNS tailnet name.
 
-## Notes
+## Production Secrets
 
-- The NestJS app uses Fastify as the HTTP adapter.
-- The API listens on `PORT` from the environment, or port `3000` by default.
-- On the production droplet, set `HOST=127.0.0.1` so the API is reachable through Nginx but not exposed directly on the public network.
+Production secrets should be stored outside the repo checkout:
+
+```text
+/etc/sentinel/data-api.env
+```
+
+Recommended permissions:
+
+```bash
+chown root:root /etc/sentinel/data-api.env
+chmod 600 /etc/sentinel/data-api.env
+```
+
+The systemd unit should reference that file:
+
+```ini
+EnvironmentFile=/etc/sentinel/data-api.env
+```
+
+Do not store production secrets in committed files.
+
+## NVD Import
+
+Run the existing CVE import script:
+
+```bash
+npm run import:cves
+```
+
+Or trigger the API import endpoint with a key scoped for `import:cves`.
