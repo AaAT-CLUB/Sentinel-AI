@@ -3,6 +3,7 @@ import { Throttle } from '@nestjs/throttler';
 import { AppService } from './app.service';
 import { LogsService } from './logs.service';
 import { Public } from './public.decorator';
+import { RequireScopes } from './scopes.decorator';
 
 @Controller()
 export class AppController {
@@ -13,6 +14,7 @@ export class AppController {
 
   @Get()
   @Throttle({ 'db-default': { ttl: 60_000, limit: 10 } })
+  @RequireScopes('read:vulnerabilities')
   getRoot() {
     return { message: 'Sentinel AI Data Engineering API' };
   }
@@ -28,18 +30,21 @@ export class AppController {
   // 20 reads per IP per minute to prevent DB read overload
   @Get('vulnerabilities')
   @Throttle({ 'db-default': { ttl: 60_000, limit: 30 } })
+  @RequireScopes('read:vulnerabilities')
   async getVulnerabilities(@Query() query: Record<string, string>) {
     return this.appService.getVulnerabilities(query);
   }
 
   @Get('vulnerabilities/:cveId')
   @Throttle({ 'db-default': { ttl: 60_000, limit: 30 } })
+  @RequireScopes('read:vulnerabilities')
   async getVulnerabilityByCveId(@Param('cveId') cveId: string) {
     return this.appService.getVulnerabilityByCveId(cveId);
   }
 
   @Post('vulnerabilities')
   @Throttle({ 'db-default': { ttl: 60_000, limit: 30 } })
+  @RequireScopes('write:vulnerabilities')
   async createVulnerability(@Body() body: unknown) {
     if (Array.isArray(body)) {
       return this.appService.createVulnerabilities(body);
@@ -50,12 +55,14 @@ export class AppController {
   // 5 imports per IP per minute - expensive: hits NVD API + bulk DB write
   @Post('import-cves')
   @Throttle({ 'db-default': { ttl: 60_000, limit: 5 } })
+  @RequireScopes('import:cves')
   async importCves() {
     return this.appService.importCVEs();
   }
 
   // Admin-only: returns the last 1000 request log entries
   @Get('logs')
+  @RequireScopes('admin:logs')
   getLogs() {
     return this.logsService.getAll();
   }

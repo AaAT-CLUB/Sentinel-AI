@@ -5,9 +5,11 @@ import { Pool } from 'pg';
 import { AllExceptionsFilter } from './all-exceptions.filter';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { ApiKeyService } from './api-key.service';
 import { ApiKeyGuard } from './auth.guard';
 import { LoggingInterceptor } from './logging.interceptor';
 import { LogsService } from './logs.service';
+import { UserSecurityService } from './user-security.service';
 
 @Module({
   imports: [
@@ -22,7 +24,9 @@ import { LogsService } from './logs.service';
   controllers: [AppController],
   providers: [
     AppService,
+    ApiKeyService,
     LogsService,
+    UserSecurityService,
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,

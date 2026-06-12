@@ -1,80 +1,120 @@
 # Sentinel AI Data API Usage Guide
 
-This guide is for Sentinel AI teams that need to read vulnerability data or trigger a CVE import from the Data Engineering API.
+This guide is for teams and services that need Sentinel AI vulnerability data from the Data Engineering API.
 
-## Base URL
+## Base URLs
 
-Production API base URL:
+The Data API is private infrastructure. Public internet access to `/data-api/*` is intentionally disabled.
 
-```text
-https://sentinel-a-i.com/data-api
+Use the right URL for your caller:
+
+| Caller | Base URL |
+|---|---|
+| DataEngineering service running on the Droplet | `http://127.0.0.1:3000` |
+| Team locally connected to Tailscale | `https://sentinel-ai-data.tail55e29b.ts.net/data-api` |
+| Other backend service on the same Droplet | `http://127.0.0.1:3000` |
+
+Do not call `https://sentinel-a-i.com/data-api` from new code. That public path is being removed.
+
+## Tailscale Access For Team Devices
+
+1. Install Tailscale from `https://tailscale.com/download`.
+2. Sign in with the account invited to the Sentinel AI tailnet.
+3. If device approval is enabled, wait for a Tailscale admin to approve your device.
+4. Confirm you can see the Droplet in Tailscale as `sentinel-ai-data`.
+5. Call the private API URL over Tailscale:
+
+```bash
+curl https://sentinel-ai-data.tail55e29b.ts.net/data-api/health
 ```
 
-The Data Engineering API is exposed through Nginx under `/data-api/*`. The existing FastAPI service remains under `/api/*`, so do not use `/api` for the endpoints in this document.
+If the Droplet is disconnected by a Tailscale admin, or if `tailscaled` is stopped on the Droplet, team laptop access will stop until it is reconnected.
 
 ## Authentication
 
-Read-only endpoints do not require authentication.
+`GET /health` is public inside the private network so monitors can verify the service.
 
-The import endpoint requires an API key in the `x-api-key` header:
+Every other endpoint requires an `x-api-key` header. API keys are scoped, revocable, and stored as hashes in PostgreSQL. Raw keys are shown only once when created.
 
-```bash
-curl -X POST https://sentinel-a-i.com/data-api/import-cves \
-  -H "x-api-key: YOUR_API_KEY"
-```
-
-The API key is stored on the droplet in:
-
-```text
-/root/Sentinel-AI/DataEngineeringTeam/.env
-```
-
-From the droplet console, root can print it with:
+Example:
 
 ```bash
-grep '^API_KEY=' /root/Sentinel-AI/DataEngineeringTeam/.env | cut -d= -f2-
+curl "https://sentinel-ai-data.tail55e29b.ts.net/data-api/vulnerabilities?limit=25" \
+  -H "x-api-key: sk_sentinel_<prefix>_<secret>"
 ```
 
-Do not commit the API key, paste it into public channels, or hardcode it in browser code.
+Never put an API key in browser code. Call the Data API from backend code or a trusted local tool.
+
+## API Key Scopes
+
+| Scope | Allows |
+|---|---|
+| `read:vulnerabilities` | `GET /`, `GET /vulnerabilities`, `GET /vulnerabilities/:cve_id` |
+| `write:vulnerabilities` | `POST /vulnerabilities` |
+| `import:cves` | `POST /import-cves` |
+| `admin:logs` | `GET /logs` |
+
+Request the smallest scope set needed for the caller.
+
+## API Key Administration
+
+Run these commands from `DataEngineeringTeam/` on a trusted operator machine or on the Droplet with production database environment variables loaded.
+
+Create or verify the key table:
+
+```bash
+npm run db:migrate
+```
+
+Create a key:
+
+```bash
+npm run api-key:create -- --owner webserver --scopes read:vulnerabilities
+```
+
+Create a key with multiple scopes:
+
+```bash
+npm run api-key:create -- --owner data-importer --scopes read:vulnerabilities,import:cves
+```
+
+List keys:
+
+```bash
+npm run api-key:list
+```
+
+Revoke a key:
+
+```bash
+npm run api-key:revoke -- --prefix <prefix>
+```
+
+Store raw keys in the team password manager immediately. They cannot be recovered from the database.
 
 ## Endpoints
 
-| Method | Path | Auth | Purpose |
-|---|---|---|---|
-| `GET` | `/` | No | Confirms the Data Engineering API is reachable. |
-| `GET` | `/health` | No | Confirms the API can connect to PostgreSQL. |
-| `GET` | `/vulnerabilities` | No | Returns imported vulnerabilities, newest first, with optional filters. |
-| `GET` | `/vulnerabilities/:cve_id` | No | Returns one vulnerability by exact CVE ID. |
-| `POST` | `/vulnerabilities` | Yes | Inserts one or more CVEs manually with deduplication by `cve_id`. |
-| `POST` | `/import-cves` | Yes | Fetches CVEs from NVD and inserts new rows into PostgreSQL. |
+| Method | Path | Auth | Required Scope | Purpose |
+|---|---|---|---|---|
+| `GET` | `/health` | No | none | Confirms the API can connect to PostgreSQL. |
+| `GET` | `/` | Yes | `read:vulnerabilities` | Confirms the Data Engineering API is reachable. |
+| `GET` | `/vulnerabilities` | Yes | `read:vulnerabilities` | Returns imported vulnerabilities, newest first, with optional filters. |
+| `GET` | `/vulnerabilities/:cve_id` | Yes | `read:vulnerabilities` | Returns one vulnerability by exact CVE ID. |
+| `POST` | `/vulnerabilities` | Yes | `write:vulnerabilities` | Inserts one or more CVEs manually with deduplication by `cve_id`. |
+| `POST` | `/import-cves` | Yes | `import:cves` | Fetches CVEs from NVD and inserts new rows into PostgreSQL. |
+| `GET` | `/logs` | Yes | `admin:logs` | Returns recent in-memory request logs. |
 
 ## Endpoint Details
-
-### `GET /`
-
-Checks that the service is online.
-
-```bash
-curl https://sentinel-a-i.com/data-api/
-```
-
-Example response:
-
-```json
-{
-  "message": "Sentinel AI Data Engineering API"
-}
-```
 
 ### `GET /health`
 
 Checks that the API is online and can reach the database.
 
 ```bash
-curl https://sentinel-a-i.com/data-api/health
+curl https://sentinel-ai-data.<tailnet>.ts.net/data-api/health
 ```
 
-Example success response:
+Example response:
 
 ```json
 {
@@ -82,14 +122,13 @@ Example success response:
 }
 ```
 
-If PostgreSQL is unreachable, this endpoint returns a service unavailable error.
-
 ### `GET /vulnerabilities`
 
 Returns imported vulnerabilities. By default, this endpoint returns the latest 100 records.
 
 ```bash
-curl https://sentinel-a-i.com/data-api/vulnerabilities
+curl "https://sentinel-ai-data.<tailnet>.ts.net/data-api/vulnerabilities?severity=HIGH&limit=250" \
+  -H "x-api-key: sk_sentinel_<prefix>_<secret>"
 ```
 
 Optional query parameters:
@@ -104,53 +143,13 @@ Optional query parameters:
 | `published_from` | `2026-01-01` | Return rows with `published_date` on or after this date. |
 | `published_to` | `2026-06-30` | Return rows with `published_date` on or before this date. |
 
-Examples:
-
-```bash
-curl "https://sentinel-a-i.com/data-api/vulnerabilities?limit=500"
-curl "https://sentinel-a-i.com/data-api/vulnerabilities?severity=HIGH&limit=250"
-curl "https://sentinel-a-i.com/data-api/vulnerabilities?keyword=buffer%20overflow"
-curl "https://sentinel-a-i.com/data-api/vulnerabilities?cve_id=CVE-1999-0095"
-```
-
-Response shape:
-
-```json
-[
-  {
-    "id": 50,
-    "cve_id": "CVE-1999-1216",
-    "description": "Cisco routers 9.17 and earlier allow remote attackers...",
-    "severity": "HIGH",
-    "published_date": "1993-04-22T04:00:00.000Z"
-  }
-]
-```
-
-Notes:
-
-- Results are ordered by `published_date` descending.
-- `severity` can be values such as `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`, or `UNKNOWN`.
-- `published_date` is returned as an ISO timestamp string.
-
 ### `GET /vulnerabilities/:cve_id`
 
 Returns one vulnerability by exact CVE ID.
 
 ```bash
-curl https://sentinel-a-i.com/data-api/vulnerabilities/CVE-1999-0095
-```
-
-Example response:
-
-```json
-{
-  "id": 1,
-  "cve_id": "CVE-1999-0095",
-  "description": "The debug command in Sendmail is enabled...",
-  "severity": "HIGH",
-  "published_date": "1988-10-01T04:00:00.000Z"
-}
+curl https://sentinel-ai-data.<tailnet>.ts.net/data-api/vulnerabilities/CVE-1999-0095 \
+  -H "x-api-key: sk_sentinel_<prefix>_<secret>"
 ```
 
 If the CVE ID does not exist, the API returns `404 Not Found`.
@@ -160,62 +159,15 @@ If the CVE ID does not exist, the API returns `404 Not Found`.
 Inserts a vulnerability manually. The endpoint uses `cve_id` as the deduplication key, so repeated requests for the same CVE ID do not create duplicate rows.
 
 ```bash
-curl -X POST https://sentinel-a-i.com/data-api/vulnerabilities \
+curl -X POST https://sentinel-ai-data.<tailnet>.ts.net/data-api/vulnerabilities \
   -H "Content-Type: application/json" \
-  -H "x-api-key: YOUR_API_KEY" \
+  -H "x-api-key: sk_sentinel_<prefix>_<secret>" \
   -d '{
     "cve_id": "CVE-2026-0001",
     "description": "Example vulnerability description",
     "severity": "HIGH",
     "published_date": "2026-06-05T00:00:00Z"
   }'
-```
-
-Example response for a new row:
-
-```json
-{
-  "inserted": true,
-  "vulnerability": {
-    "id": 51,
-    "cve_id": "CVE-2026-0001",
-    "description": "Example vulnerability description",
-    "severity": "HIGH",
-    "published_date": "2026-06-05T00:00:00.000Z"
-  }
-}
-```
-
-Example response for a duplicate:
-
-```json
-{
-  "inserted": false,
-  "duplicate": true,
-  "cve_id": "CVE-2026-0001"
-}
-```
-
-You can also submit an array of vulnerability objects to insert multiple records in one request:
-
-```bash
-curl -X POST https://sentinel-a-i.com/data-api/vulnerabilities \
-  -H "Content-Type: application/json" \
-  -H "x-api-key: YOUR_API_KEY" \
-  -d '[
-    {
-      "cve_id": "CVE-2026-0001",
-      "description": "First vulnerability",
-      "severity": "HIGH",
-      "published_date": "2026-06-05T00:00:00Z"
-    },
-    {
-      "cve_id": "CVE-2026-0002",
-      "description": "Second vulnerability",
-      "severity": "MEDIUM",
-      "published_date": "2026-06-05T00:00:00Z"
-    }
-  ]'
 ```
 
 Required fields:
@@ -233,83 +185,22 @@ Optional fields:
 Fetches 50 CVEs from the NVD API and inserts them into the `vulnerabilities` table. Duplicate `cve_id` values are skipped.
 
 ```bash
-curl -X POST https://sentinel-a-i.com/data-api/import-cves \
-  -H "x-api-key: YOUR_API_KEY"
-```
-
-Example response when rows already exist:
-
-```json
-{
-  "imported": 0,
-  "skipped": 50,
-  "total": 50
-}
-```
-
-Example response after a fresh import:
-
-```json
-{
-  "imported": 50,
-  "skipped": 0,
-  "total": 50
-}
+curl -X POST https://sentinel-ai-data.<tailnet>.ts.net/data-api/import-cves \
+  -H "x-api-key: sk_sentinel_<prefix>_<secret>"
 ```
 
 Use this endpoint intentionally. It calls the external NVD API and writes to the production PostgreSQL database.
 
-## JavaScript Examples
-
-### Read Vulnerabilities
-
-```js
-async function getVulnerabilities() {
-  const params = new URLSearchParams({
-    severity: 'HIGH',
-    limit: '250',
-  });
-  const response = await fetch(`https://sentinel-a-i.com/data-api/vulnerabilities?${params}`);
-
-  if (!response.ok) {
-    throw new Error(`Data API request failed: ${response.status}`);
-  }
-
-  return response.json();
-}
-```
-
-### Trigger an Import From a Backend Service
-
-Do not put the API key in frontend/browser code. Call this from a backend service or server-side job.
-
-```js
-async function importCves(apiKey) {
-  const response = await fetch('https://sentinel-a-i.com/data-api/import-cves', {
-    method: 'POST',
-    headers: {
-      'x-api-key': apiKey,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Import failed: ${response.status}`);
-  }
-
-  return response.json();
-}
-```
-
 ## Database Reference
 
-The API reads and writes to the PostgreSQL database:
+The API reads and writes to:
 
 ```text
 Database: sentinel_dev
 Table: public.vulnerabilities
 ```
 
-Schema:
+Expected vulnerability schema:
 
 ```sql
 CREATE TABLE IF NOT EXISTS vulnerabilities (
@@ -321,23 +212,49 @@ CREATE TABLE IF NOT EXISTS vulnerabilities (
 );
 ```
 
+API keys are stored in:
+
+```text
+Table: public.api_keys
+```
+
+Raw API keys are not stored.
+
 ## Operational Notes
 
-- The NestJS API runs on the droplet as `sentinel-data-api.service`.
-- The service binds to `127.0.0.1:3000`; public access goes through Nginx at `/data-api/*`.
+- The NestJS Data API runs as `sentinel-data-api.service`.
+- The service binds to `127.0.0.1:3000`.
 - PostgreSQL listens locally on `127.0.0.1:5432`.
-- The existing FastAPI backend runs as `sentinel-api.service` and remains available at `/api/*`.
-- The API key and database password are stored in the droplet `.env`, not in GitHub.
+- Production secrets should live in `/etc/sentinel/data-api.env` with `root:root` ownership and `600` permissions.
+- The existing public FastAPI backend remains separate under `/api/*`.
 
-Useful droplet checks:
+Useful Droplet checks:
 
 ```bash
-systemctl status sentinel-data-api --no-pager
+systemctl status sentinel-data-api.service --no-pager
 systemctl status postgresql --no-pager
-systemctl status nginx --no-pager
+systemctl status tailscaled --no-pager
+ss -tulpn | grep -E '(:3000|:5432|:80|:443)'
 curl -i http://127.0.0.1:3000/health
-curl -i https://sentinel-a-i.com/data-api/health
 ```
+
+## Migration Note For Other Teams
+
+Other teams should not edit DataEngineering credentials directly.
+
+Backend services on the same Droplet should call:
+
+```text
+http://127.0.0.1:3000
+```
+
+Team laptops should call:
+
+```text
+https://sentinel-ai-data.<tailnet>.ts.net/data-api
+```
+
+All non-health calls must include `x-api-key`. Ask DataEngineering for the minimum required scope.
 
 ## Troubleshooting
 
@@ -347,35 +264,23 @@ Check that PostgreSQL and the Nest API are running:
 
 ```bash
 systemctl is-active postgresql
-systemctl is-active sentinel-data-api
+systemctl is-active sentinel-data-api.service
 ```
 
-### `POST /import-cves` returns `401 Unauthorized`
+### Requests return `401 Unauthorized`
 
-The `x-api-key` header is missing or does not match `API_KEY` in:
+The `x-api-key` header is missing, malformed, expired, revoked, or does not match a hashed key in PostgreSQL.
 
-```text
-/root/Sentinel-AI/DataEngineeringTeam/.env
-```
+### Requests return `403 Forbidden`
 
-### `/data-api/*` returns an Nginx error
+The key is valid but does not have the scope required for that endpoint.
 
-Check Nginx and the Nest service:
+### The Tailscale URL does not resolve
+
+Confirm Tailscale is connected on both the laptop and Droplet:
 
 ```bash
-nginx -t
-systemctl status nginx --no-pager
-systemctl status sentinel-data-api --no-pager
+tailscale status
 ```
 
-### Import succeeds but no new rows appear
-
-The import endpoint skips duplicate `cve_id` values. A response like this is expected when the latest fetched CVEs already exist:
-
-```json
-{
-  "imported": 0,
-  "skipped": 50,
-  "total": 50
-}
-```
+If the Droplet shows disconnected in the Tailscale admin console, a Tailscale admin must reconnect or approve it.
