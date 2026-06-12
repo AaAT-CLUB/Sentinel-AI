@@ -11,10 +11,8 @@ Use the right URL for your caller:
 | Caller | Base URL |
 |---|---|
 | DataEngineering service running on the Droplet | `http://127.0.0.1:3000` |
-| Team laptop connected to Tailscale | `https://sentinel-ai-data.<tailnet>.ts.net/data-api` |
+| Team locally connected to Tailscale | `https://sentinel-ai-data.tail55e29b.ts.net/data-api` |
 | Other backend service on the same Droplet | `http://127.0.0.1:3000` |
-
-Replace `<tailnet>` with the team's Tailscale MagicDNS tailnet name.
 
 Do not call `https://sentinel-a-i.com/data-api` from new code. That public path is being removed.
 
@@ -27,7 +25,7 @@ Do not call `https://sentinel-a-i.com/data-api` from new code. That public path 
 5. Call the private API URL over Tailscale:
 
 ```bash
-curl https://sentinel-ai-data.<tailnet>.ts.net/data-api/health
+curl https://sentinel-ai-data.tail55e29b.ts.net/data-api/health
 ```
 
 If the Droplet is disconnected by a Tailscale admin, or if `tailscaled` is stopped on the Droplet, team laptop access will stop until it is reconnected.
@@ -41,7 +39,7 @@ Every other endpoint requires an `x-api-key` header. API keys are scoped, revoca
 Example:
 
 ```bash
-curl "https://sentinel-ai-data.<tailnet>.ts.net/data-api/vulnerabilities?limit=25" \
+curl "https://sentinel-ai-data.tail55e29b.ts.net/data-api/vulnerabilities?limit=25" \
   -H "x-api-key: sk_sentinel_<prefix>_<secret>"
 ```
 
