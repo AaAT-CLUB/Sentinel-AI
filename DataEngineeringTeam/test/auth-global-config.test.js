@@ -22,36 +22,39 @@ function createContext(headers = {}) {
   };
 }
 
-function createReflector(isPublic) {
+function createReflector(isPublic, scopes = []) {
   return {
     getAllAndOverride(key, targets) {
-      assert.equal(key, 'isPublic');
       assert.equal(targets.length, 2);
+      if (key === 'isPublic') {
+        return isPublic;
+      }
+      if (key === 'requiredScopes') {
+        return scopes;
+      }
+      assert.fail(`unexpected metadata key ${key}`);
       return isPublic;
     },
   };
 }
 
-const previousApiKey = process.env.API_KEY;
+async function runGuardChecks() {
+  const publicGuard = new ApiKeyGuard(createReflector(true), {
+    async validate() {
+      throw new Error('public routes must not validate API keys');
+    },
+  });
+  assert.equal(await publicGuard.canActivate(createContext()), true);
 
-try {
-  delete process.env.API_KEY;
-  const publicGuard = new ApiKeyGuard(createReflector(true));
-  assert.equal(publicGuard.canActivate(createContext()), true);
-
-  process.env.API_KEY = 'expected-key';
-  const privateGuard = new ApiKeyGuard(createReflector(false));
-  assert.throws(
+  const privateGuard = new ApiKeyGuard(createReflector(false), {
+    async validate() {
+      return null;
+    },
+  });
+  await assert.rejects(
     () => privateGuard.canActivate(createContext({ 'x-api-key': 'wrong-key' })),
     UnauthorizedException,
   );
-  assert.equal(privateGuard.canActivate(createContext({ 'x-api-key': 'expected-key' })), true);
-} finally {
-  if (previousApiKey === undefined) {
-    delete process.env.API_KEY;
-  } else {
-    process.env.API_KEY = previousApiKey;
-  }
 }
 
 const appModuleSource = fs.readFileSync(path.join(__dirname, '..', 'src', 'app.module.ts'), 'utf8');
@@ -66,5 +69,13 @@ assert(
 const controllerSource = fs.readFileSync(path.join(__dirname, '..', 'src', 'app.controller.ts'), 'utf8');
 assert.match(controllerSource, /@Public\(\)\s*\r?\n\s*@Get\('health'\)/);
 assert.doesNotMatch(controllerSource, /UseGuards/);
+assert.doesNotMatch(fs.readFileSync(path.join(__dirname, '..', 'src', 'auth.guard.ts'), 'utf8'), /process\.env\.API_KEY/);
 
-console.log('Auth and throttling guards are global with Public endpoint support.');
+runGuardChecks()
+  .then(() => {
+    console.log('Auth and throttling guards are global with Public endpoint support.');
+  })
+  .catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  });
