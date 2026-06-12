@@ -30,6 +30,20 @@ function isValidUrl(str) {
   catch { return false; }
 }
 
+// ── THEME ─────────────────────────────────────────────────────────────
+function initTheme() {
+  const btn = el('theme-toggle');
+  if (!btn) return;
+  btn.textContent = document.body.classList.contains('light') ? '🌙' : '☀️';
+}
+
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light');
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+  const btn = el('theme-toggle');
+  if (btn) btn.textContent = isLight ? '🌙' : '☀️';
+}
+
 // ── STATUS INDICATORS ─────────────────────────────────────────────────
 function setDot(key, state) {
   const dot = el(`dot-${key}`);
@@ -267,3 +281,5 @@ function renderHistory() {
 
 const urlInput = el('url-input');
 if (urlInput) urlInput.addEventListener('keydown', e => { if (e.key === 'Enter') analyzeLink(); });
+
+initTheme();

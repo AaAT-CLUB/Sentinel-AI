@@ -1,6 +1,11 @@
 const assert = require('node:assert/strict');
-const test = require('node:test');
 const { AppService } = require('../dist/app.service');
+
+const tests = [];
+
+function test(name, fn) {
+  tests.push({ name, fn });
+}
 
 function createService(queryHandler) {
   const queries = [];
@@ -19,7 +24,7 @@ test('getVulnerabilities defaults to limit 100', async () => {
 
   await service.getVulnerabilities({});
 
-  assert.equal(queries[0].params.at(-1), 100);
+  assert.equal(queries[0].params[queries[0].params.length - 1], 100);
   assert.match(queries[0].sql, /LIMIT \$\d+/);
 });
 
@@ -28,7 +33,7 @@ test('getVulnerabilities accepts a custom integer limit', async () => {
 
   await service.getVulnerabilities({ limit: '250' });
 
-  assert.equal(queries[0].params.at(-1), 250);
+  assert.equal(queries[0].params[queries[0].params.length - 1], 250);
 });
 
 test('getVulnerabilities filters by cve id, description keyword, and severity', async () => {
@@ -100,4 +105,16 @@ test('createVulnerability deduplicates existing cve ids', async () => {
     duplicate: true,
     cve_id: 'CVE-2026-0001',
   });
+});
+
+async function run() {
+  for (const { name, fn } of tests) {
+    await fn();
+    console.log(`ok - ${name}`);
+  }
+}
+
+run().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
 });
