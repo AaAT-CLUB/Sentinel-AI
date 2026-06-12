@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { Pool } from 'pg';
 
 export interface LogEntry {
@@ -9,15 +9,13 @@ export interface LogEntry {
   durationMs: number;
   ip: string;
   apiKeyPrefix: string;
-  userAgent?: string | null;
+  user_agent?: string | null;
 }
 
 type LogQuery = {
   limit?: string | number;
   status_code?: string;
-  statusCode?: string;
   api_key_prefix?: string;
-  apiKeyPrefix?: string;
   method?: string;
   from?: string;
   to?: string;
@@ -35,8 +33,12 @@ type LogRow = {
 };
 
 @Injectable()
-export class LogsService {
+export class LogsService implements OnModuleInit {
   constructor(@Inject('PG_POOL') private readonly pool: Pool) {}
+
+  async onModuleInit() {
+    await this.assertApiRequestLogsSchema();
+  }
 
   async push(entry: LogEntry) {
     try {
@@ -52,7 +54,7 @@ export class LogsService {
           entry.durationMs,
           entry.ip,
           entry.apiKeyPrefix,
-          entry.userAgent ?? null,
+          entry.user_agent ?? null,
         ],
       );
     } catch {
@@ -64,7 +66,7 @@ export class LogsService {
     const params: unknown[] = [];
     const filters: string[] = [];
 
-    const statusCode = this.cleanOptionalString(query.status_code ?? query.statusCode);
+    const statusCode = this.cleanOptionalString(query.status_code);
     if (statusCode) {
       const parsed = Number(statusCode);
       if (!Number.isInteger(parsed) || parsed < 100 || parsed > 599) {
@@ -74,7 +76,7 @@ export class LogsService {
       filters.push(`status_code = $${params.length}`);
     }
 
-    const apiKeyPrefix = this.cleanOptionalString(query.api_key_prefix ?? query.apiKeyPrefix);
+    const apiKeyPrefix = this.cleanOptionalString(query.api_key_prefix);
     if (apiKeyPrefix) {
       params.push(apiKeyPrefix);
       filters.push(`api_key_prefix = $${params.length}`);
@@ -121,8 +123,56 @@ export class LogsService {
       durationMs: row.duration_ms,
       ip: row.ip,
       apiKeyPrefix: row.api_key_prefix,
-      userAgent: row.user_agent,
+      user_agent: row.user_agent,
     }));
+  }
+
+  private async assertApiRequestLogsSchema() {
+    const requiredColumns = [
+      'id',
+      'timestamp',
+      'method',
+      'url',
+      'status_code',
+      'duration_ms',
+      'ip',
+      'api_key_prefix',
+      'user_agent',
+      'created_at',
+    ];
+    const requiredIndexes = [
+      'api_request_logs_pkey',
+      'idx_api_request_logs_timestamp_desc',
+      'idx_api_request_logs_api_key_prefix_timestamp',
+      'idx_api_request_logs_status_code_timestamp',
+      'idx_api_request_logs_method_timestamp',
+    ];
+
+    const columnResult = await this.pool.query<{ column_name: string }>(
+      `SELECT column_name
+       FROM information_schema.columns
+       WHERE table_schema = 'public' AND table_name = 'api_request_logs'`,
+    );
+    const columns = new Set(columnResult.rows.map((row) => row.column_name));
+    const missingColumns = requiredColumns.filter((column) => !columns.has(column));
+    if (missingColumns.length > 0) {
+      throw new Error(
+        `api_request_logs schema is missing required columns: ${missingColumns.join(', ')}. Run the approved production SQL setup before starting the Data API.`,
+      );
+    }
+
+    const indexResult = await this.pool.query<{ indexname: string }>(
+      `SELECT indexname
+       FROM pg_indexes
+       WHERE schemaname = 'public' AND tablename = 'api_request_logs'`,
+    );
+    const indexes = new Set(indexResult.rows.map((row) => row.indexname));
+    const missingIndexes = requiredIndexes.filter((index) => !indexes.has(index));
+    if (missingIndexes.length > 0) {
+      throw new Error(
+        `api_request_logs schema is missing required indexes: ${missingIndexes.join(', ')}. Run the approved production SQL setup before starting the Data API.`,
+      );
+    }
   }
 
   private parseLimit(value: string | number | undefined): number {

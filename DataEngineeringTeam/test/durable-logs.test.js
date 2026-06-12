@@ -24,6 +24,7 @@ async function run() {
     durationMs: 12,
     ip: '127.0.0.1',
     apiKeyPrefix: 'readabcd',
+    user_agent: 'curl/8.5.0',
   });
 
   assert.match(insertPool.calls[0].sql, /INSERT INTO api_request_logs/);
@@ -35,7 +36,7 @@ async function run() {
     12,
     '127.0.0.1',
     'readabcd',
-    null,
+    'curl/8.5.0',
   ]);
 
   const failingPool = createPool(() => {
@@ -49,6 +50,7 @@ async function run() {
     durationMs: 1,
     ip: '127.0.0.1',
     apiKeyPrefix: 'NONE',
+    user_agent: null,
   });
 
   const selectPool = createPool((sql) => {
@@ -104,13 +106,67 @@ async function run() {
       durationMs: 0,
       ip: '127.0.0.1',
       apiKeyPrefix: 'readabcd',
-      userAgent: 'curl/8.5.0',
+      user_agent: 'curl/8.5.0',
     },
   ]);
+
+  const camelAliasPool = createPool();
+  await new LogsService(camelAliasPool).getAll({
+    statusCode: '403',
+    apiKeyPrefix: 'readabcd',
+    limit: '5',
+  });
+  assert.equal(camelAliasPool.calls[0].params.length, 1);
+  assert.deepEqual(camelAliasPool.calls[0].params, [5]);
+  assert.doesNotMatch(camelAliasPool.calls[0].sql, /status_code =/);
+  assert.doesNotMatch(camelAliasPool.calls[0].sql, /api_key_prefix =/);
 
   await assert.rejects(
     () => new LogsService(createPool()).getAll({ limit: '1001' }),
     /limit must be an integer between 1 and 1000/,
+  );
+
+  const schemaPool = createPool((sql) => {
+    if (/information_schema\.columns/.test(sql)) {
+      return {
+        rows: [
+          { column_name: 'id' },
+          { column_name: 'timestamp' },
+          { column_name: 'method' },
+          { column_name: 'url' },
+          { column_name: 'status_code' },
+          { column_name: 'duration_ms' },
+          { column_name: 'ip' },
+          { column_name: 'api_key_prefix' },
+          { column_name: 'user_agent' },
+          { column_name: 'created_at' },
+        ],
+      };
+    }
+    if (/pg_indexes/.test(sql)) {
+      return {
+        rows: [
+          { indexname: 'api_request_logs_pkey' },
+          { indexname: 'idx_api_request_logs_timestamp_desc' },
+          { indexname: 'idx_api_request_logs_api_key_prefix_timestamp' },
+          { indexname: 'idx_api_request_logs_status_code_timestamp' },
+          { indexname: 'idx_api_request_logs_method_timestamp' },
+        ],
+      };
+    }
+    return { rows: [], rowCount: 0 };
+  });
+  await new LogsService(schemaPool).onModuleInit();
+
+  const missingSchemaPool = createPool((sql) => {
+    if (/information_schema\.columns/.test(sql)) {
+      return { rows: [{ column_name: 'timestamp' }] };
+    }
+    return { rows: [] };
+  });
+  await assert.rejects(
+    () => new LogsService(missingSchemaPool).onModuleInit(),
+    /api_request_logs schema is missing required columns/,
   );
 
   console.log('Request logs persist to PostgreSQL and query durable rows.');
