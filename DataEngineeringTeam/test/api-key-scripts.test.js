@@ -4,6 +4,7 @@ const {
   createApiKey,
   listApiKeys,
   migrateApiKeys,
+  migrateApiRequestLogs,
   revokeApiKey,
 } = require('../scripts/api-keys');
 
@@ -56,6 +57,12 @@ async function run() {
     assert.match(migratePool.calls[0].sql, /CREATE TABLE IF NOT EXISTS api_keys/);
     assert.match(migratePool.calls[0].sql, /key_hash TEXT NOT NULL/);
     assert.match(migratePool.calls[0].sql, /scopes TEXT\[\] NOT NULL/);
+
+    await migrateApiRequestLogs(migratePool);
+    assert.match(migratePool.calls[1].sql, /CREATE TABLE IF NOT EXISTS api_request_logs/);
+    assert.match(migratePool.calls[1].sql, /api_key_prefix TEXT NOT NULL DEFAULT 'NONE'/);
+    assert.match(migratePool.calls[2].sql, /idx_api_request_logs_timestamp_desc/);
+    assert.match(migratePool.calls[3].sql, /idx_api_request_logs_api_key_prefix_timestamp/);
 
     const createPoolInstance = createPool();
     const created = await createApiKey(createPoolInstance, {

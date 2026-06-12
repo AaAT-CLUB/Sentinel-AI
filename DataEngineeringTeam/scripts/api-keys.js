@@ -39,6 +39,39 @@ async function migrateApiKeys(pool) {
   `);
 }
 
+async function migrateApiRequestLogs(pool) {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS api_request_logs (
+      id BIGSERIAL PRIMARY KEY,
+      timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      method TEXT NOT NULL,
+      url TEXT NOT NULL,
+      status_code INTEGER NOT NULL CHECK (status_code BETWEEN 100 AND 599),
+      duration_ms INTEGER NOT NULL CHECK (duration_ms >= 0),
+      ip TEXT NOT NULL,
+      api_key_prefix TEXT NOT NULL DEFAULT 'NONE',
+      user_agent TEXT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_api_request_logs_timestamp_desc
+    ON api_request_logs (timestamp DESC)
+  `);
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_api_request_logs_api_key_prefix_timestamp
+    ON api_request_logs (api_key_prefix, timestamp DESC)
+  `);
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_api_request_logs_status_code_timestamp
+    ON api_request_logs (status_code, timestamp DESC)
+  `);
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_api_request_logs_method_timestamp
+    ON api_request_logs (method, timestamp DESC)
+  `);
+}
+
 async function createApiKey(pool, options) {
   if (!options.owner) {
     throw new Error('--owner is required');
@@ -105,7 +138,8 @@ async function main() {
   try {
     if (command === 'migrate') {
       await migrateApiKeys(pool);
-      console.log('api_keys table is ready');
+      await migrateApiRequestLogs(pool);
+      console.log('database tables are ready');
     } else if (command === 'create') {
       const created = await createApiKey(pool, parseArgs(argv));
       console.log(JSON.stringify(created, null, 2));
@@ -134,5 +168,6 @@ module.exports = {
   hashApiKey,
   listApiKeys,
   migrateApiKeys,
+  migrateApiRequestLogs,
   revokeApiKey,
 };
