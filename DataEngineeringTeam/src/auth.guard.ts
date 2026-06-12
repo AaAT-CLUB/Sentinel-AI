@@ -51,6 +51,8 @@ export class ApiKeyGuard implements CanActivate {
       throw new UnauthorizedException('Invalid or missing x-api-key header');
     }
 
+    request.apiKey = principal;
+
     const requiredScopes =
       this.reflector.getAllAndOverride<string[]>(REQUIRED_SCOPES_KEY, [
         context.getHandler(),
@@ -61,7 +63,6 @@ export class ApiKeyGuard implements CanActivate {
       throw new ForbiddenException('API key does not have the required scope');
     }
 
-    request.apiKey = principal;
     return true;
   }
 
