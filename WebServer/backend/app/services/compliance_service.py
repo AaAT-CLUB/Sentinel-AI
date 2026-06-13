@@ -1,94 +1,23 @@
-<<<<<<< HEAD
-import os
 import re
 import requests
-from dotenv import load_dotenv
-
-# ==========================================
-# ENVIRONMENT INITIALIZATION & CONFIG
-# ==========================================
-load_dotenv()
-
-DATA_API_URL = os.getenv("DATA_API_URL")
-DATA_API_KEY = os.getenv("DATA_API_KEY")
-
-
-def sync_to_data_team(report: dict):
-    """
-    Sends the compliance scan report directly to Team 2's data-api vulnerabilities route.
-    """
-    if not DATA_API_URL or not DATA_API_KEY:
-        print("⚠️ Warning: DATA_API_URL or DATA_API_KEY missing from .env file.")
-        return None
-
-    headers = {
-        "x-api-key": DATA_API_KEY,
-        "Content-Type": "application/json"
-    }
-    
-    # Appends /vulnerabilities to the base data-api URL path
-    endpoint = f"{DATA_API_URL.rstrip('/')}/vulnerabilities"
-    
-    try:
-        response = requests.post(endpoint, json=report, headers=headers, timeout=5)
-        
-        if response.status_code in [200, 201]:
-            print(f"✅ Database Sync Successful! Status: {response.status_code}")
-        else:
-            print(f"❌ Sync Rejected by Server. Status {response.status_code}: {response.text}")
-            
-        return response.status_code
-    except requests.exceptions.RequestException as e:
-        print(f"❌ Network Connection Error (Is Tailscale off?): {e}")
-        return None
-
-
-def check_compliance_all(url: str):
-    """
-    Runs all 5 mandatory Week 3 compliance checks, saves them to Team 2's db, and returns the report.
-=======
-import requests
-import re
 
 def check_compliance_all(url: str):
     """
     Runs all 9 compliance checks and returns a structured report.
     5 OWASP controls + 4 additional security checks.
->>>>>>> aa23053e623b7d4976944828779d964b9c019c3e
     """
-    if not url.startswith(("http://", "https://")):
+    # Fix explicit triple-slash typos automatically before scanning
+    if url.startswith("https:///"):
+        url = url.replace("https:///", "https://")
+    elif not url.startswith(("http://", "https://")):
         url = "https://" + url
 
     results = {
-<<<<<<< HEAD
-        "A01_Broken_Access_Control": check_access_control(url),
-        "A02_Cryptographic_Failures": check_crypto(url),
-        "A03_Injection": check_injection(url),
-        "A05_Security_Misconfiguration": check_misconfig(url),
-        "A07_Auth_Failures": check_auth_failures(url)
-    }
-    
-    passed_count = sum([1 for r in results.values() if r["pass"]])
-    score = passed_count * 20
-    
-    report = {
-        "url": url,
-        "score": score,
-        "results": results
-    }
-    
-    # Send off to Team 2's server
-    sync_to_data_team(report)
-    
-    return report
-=======
-        # ── ORIGINAL 5 OWASP CHECKS ──────────────────────────────
         "A01_Broken_Access_Control":     check_access_control(url),
         "A02_Cryptographic_Failures":    check_crypto(url),
         "A03_Injection":                 check_injection(url),
         "A05_Security_Misconfiguration": check_misconfig(url),
         "A07_Auth_Failures":             check_auth_failures(url),
-        # ── NEW WEEK 4 CHECKS ─────────────────────────────────────
         "W4_Security_Headers":           check_security_headers(url),
         "W4_Open_Redirect":              check_open_redirect(url),
         "W4_Directory_Listing":          check_directory_listing(url),
@@ -107,34 +36,18 @@ def check_compliance_all(url: str):
     }
 
 
-# ── ORIGINAL 5 OWASP CHECKS ──────────────────────────────────────────
->>>>>>> aa23053e623b7d4976944828779d964b9c019c3e
-
-
 def check_access_control(url: str) -> dict:
     paths = ["/admin", "/config", "/.env", "/backup.sql"]
     found = []
     for path in paths:
         try:
-<<<<<<< HEAD
             r = requests.head(f"{url.rstrip('/')}{path}", timeout=2, allow_redirects=False)
-=======
-            r = requests.head(
-                f"{url.rstrip('/')}{path}",
-                timeout=2,
-                allow_redirects=False
-            )
->>>>>>> aa23053e623b7d4976944828779d964b9c019c3e
             if r.status_code == 200:
                 found.append(path)
         except:
             continue
     return {
-<<<<<<< HEAD
-        "pass": len(found) == 0, 
-=======
         "pass": len(found) == 0,
->>>>>>> aa23053e623b7d4976944828779d964b9c019c3e
         "details": f"Exposed paths found: {found}" if found else "No exposed administrative paths detected."
     }
 
@@ -142,10 +55,6 @@ def check_access_control(url: str) -> dict:
 def check_crypto(url: str) -> dict:
     if not url.startswith("https://"):
         return {"pass": False, "details": "Site does not use HTTPS. Traffic is unencrypted."}
-<<<<<<< HEAD
-    
-=======
->>>>>>> aa23053e623b7d4976944828779d964b9c019c3e
     try:
         r = requests.get(url, timeout=3)
         hsts = r.headers.get("Strict-Transport-Security")
@@ -162,10 +71,6 @@ def check_injection(url: str) -> dict:
         r = requests.get(test_url, timeout=3)
         errors = ["sql syntax", "mysql_fetch", "ora-", "postgre", "sqlite"]
         detected = [e for e in errors if e in r.text.lower()]
-<<<<<<< HEAD
-        
-=======
->>>>>>> aa23053e623b7d4976944828779d964b9c019c3e
         if detected:
             return {"pass": False, "details": f"Potential SQL Injection vulnerability. Leaked database messages: {detected}"}
         return {"pass": True, "details": "No visible database errors leaked during injection testing."}
@@ -178,10 +83,6 @@ def check_misconfig(url: str) -> dict:
         r = requests.head(url, timeout=2)
         server_header = r.headers.get("Server", "")
         has_version = bool(re.search(r'\d', server_header))
-<<<<<<< HEAD
-        
-=======
->>>>>>> aa23053e623b7d4976944828779d964b9c019c3e
         if has_version:
             return {"pass": False, "details": f"Server banner exposes specific version data: '{server_header}'"}
         return {"pass": True, "details": f"Server banner is clean or hidden ('{server_header}')."}
@@ -194,32 +95,16 @@ def check_auth_failures(url: str) -> dict:
         r = requests.get(url, timeout=3)
         html_content = r.text.lower()
         has_login = "type=\"password\"" in html_content or "action=\"/login\"" in html_content
-<<<<<<< HEAD
-        
-=======
->>>>>>> aa23053e623b7d4976944828779d964b9c019c3e
         if has_login and not url.startswith("https://"):
             return {"pass": False, "details": "Login credentials are submitted over unencrypted HTTP protocol."}
         if has_login:
             return {"pass": True, "details": "Login form discovered and securely enforced over HTTPS."}
         return {"pass": True, "details": "No standard high-risk credential intake forms discovered on home route."}
     except:
-<<<<<<< HEAD
         return {"pass": True, "details": "Could not complete authentication audit."}
-=======
-        return {"pass": True, "details": "Could not complete authentication audit."}
-
-
-# ── NEW WEEK 4 CHECKS ─────────────────────────────────────────────────
 
 
 def check_security_headers(url: str) -> dict:
-    """
-    Checks for 3 important browser protection headers.
-    X-Frame-Options: prevents clickjacking
-    Content-Security-Policy: controls what scripts can run
-    X-Content-Type-Options: stops browsers guessing file types
-    """
     try:
         r = requests.get(url, timeout=3)
         missing = []
@@ -237,10 +122,6 @@ def check_security_headers(url: str) -> dict:
 
 
 def check_open_redirect(url: str) -> dict:
-    """
-    Tests if the site blindly redirects to external URLs.
-    Attackers use this to send users to fake login pages.
-    """
     test_url = f"{url.rstrip('/')}/?next=https://evil.com"
     try:
         r = requests.get(test_url, timeout=3, allow_redirects=False)
@@ -254,19 +135,11 @@ def check_open_redirect(url: str) -> dict:
 
 
 def check_directory_listing(url: str) -> dict:
-    """
-    Checks if the server exposes folder contents.
-    This reveals file structure to attackers.
-    """
     paths = ["/images/", "/uploads/", "/files/", "/static/"]
     exposed = []
     for path in paths:
         try:
-            r = requests.get(
-                f"{url.rstrip('/')}{path}",
-                timeout=2,
-                allow_redirects=False
-            )
+            r = requests.get(f"{url.rstrip('/')}{path}", timeout=2, allow_redirects=False)
             if r.status_code == 200 and "index of" in r.text.lower():
                 exposed.append(path)
         except:
@@ -277,11 +150,6 @@ def check_directory_listing(url: str) -> dict:
 
 
 def check_cookie_security(url: str) -> dict:
-    """
-    Checks if cookies have Secure and HttpOnly flags.
-    Without these, cookies can be stolen through
-    JavaScript or unencrypted connections.
-    """
     try:
         r = requests.get(url, timeout=3)
         cookies = r.cookies
@@ -301,4 +169,3 @@ def check_cookie_security(url: str) -> dict:
         return {"pass": True, "details": "All cookies have proper Secure and HttpOnly flags."}
     except:
         return {"pass": True, "details": "Could not complete cookie security audit."}
->>>>>>> aa23053e623b7d4976944828779d964b9c019c3e
