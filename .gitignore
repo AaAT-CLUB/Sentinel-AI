@@ -228,3 +228,7 @@ __marimo__/
 
 # Node.JS
 node_modules/
+
+# Postman
+.postman
+postman

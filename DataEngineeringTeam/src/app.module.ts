@@ -1,16 +1,49 @@
 import { Module } from '@nestjs/common';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { Pool } from 'pg';
+import { AllExceptionsFilter } from './all-exceptions.filter';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { ApiKeyService } from './api-key.service';
+import { ApiKeyGuard } from './auth.guard';
+import { LoggingInterceptor } from './logging.interceptor';
+import { LogsService } from './logs.service';
+import { UserSecurityService } from './user-security.service';
 
-// Root module for the NestJS application. It defines controllers and providers.
 @Module({
-  imports: [],
+  imports: [
+    ThrottlerModule.forRoot([
+      {
+        name: 'db-default',
+        ttl: 60_000,
+        limit: 60,
+      },
+    ]),
+  ],
   controllers: [AppController],
   providers: [
     AppService,
+    ApiKeyService,
+    LogsService,
+    UserSecurityService,
     {
-      // Provide a shared PostgreSQL connection pool to the application.
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ApiKeyGuard,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionsFilter,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggingInterceptor,
+    },
+    {
       provide: 'PG_POOL',
       useFactory: () =>
         new Pool({

@@ -4,27 +4,35 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Sentinel AI — Threat Scanner</title>
-  <link rel="stylesheet" href="styles.css?v=8" />
+  <link rel="stylesheet" href="styles.css?v=11" />
 </head>
 <body>
+<script>if(localStorage.getItem('theme')==='light')document.body.classList.add('light')</script>
 
 <nav>
   <div class="logo">
     <div class="logo-icon">🛡</div>
     Sentinel AI
   </div>
-  <div class="status-badge" style="display:flex;flex-direction:column;gap:5px;border:1px solid #1e1e1e;border-radius:12px;padding:10px 16px;font-size:0.72rem;color:#555;background:#111;">
-    <div class="status-item" style="display:flex;align-items:center;gap:8px;">
-      <div class="status-dot checking" id="dot-api"></div>
-      <span>API</span>
-    </div>
-    <div class="status-item" style="display:flex;align-items:center;gap:8px;">
-      <div class="status-dot checking" id="dot-threat"></div>
-      <span>Threat DB</span>
-    </div>
-    <div class="status-item" style="display:flex;align-items:center;gap:8px;">
-      <div class="status-dot checking" id="dot-ai"></div>
-      <span>AI Engine</span>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Toggle light mode">☀️</button>
+    <div class="status-badge">
+      <div class="status-item">
+        <div class="status-dot checking" id="dot-api"></div>
+        <span>API</span>
+      </div>
+      <div class="status-item">
+        <div class="status-dot checking" id="dot-threat"></div>
+        <span>Threat DB</span>
+      </div>
+      <div class="status-item">
+        <div class="status-dot checking" id="dot-ai"></div>
+        <span>AI Engine</span>
+      </div>
+      <div class="status-item">
+        <div class="status-dot checking" id="dot-data"></div>
+        <span>Data API</span>
+      </div>
     </div>
   </div>
 </nav>
@@ -98,6 +106,16 @@
           <div class="result-row-label" style="margin-bottom:10px">Summary</div>
           <div class="summary-box" id="result-summary"></div>
         </div>
+        <div class="compliance-section" id="compliance-section" style="display:none;">
+          <div class="compliance-header">
+            <span class="result-row-label">OWASP Compliance</span>
+            <div class="compliance-score-display">
+              <span id="compliance-score">—</span>
+              <span class="compliance-score-max">/100</span>
+            </div>
+          </div>
+          <div class="compliance-checks" id="compliance-checks"></div>
+        </div>
       </div>
       <div class="result-footer">
         <span class="scan-timestamp" id="scan-timestamp"></span>
@@ -118,10 +136,9 @@
 </div>
 
 <footer>Sentinel AI · AaAT-CLUB · Capstone 2026</footer>
-<script src="script.js?v=4"></script>
+<script src="script.js?v=7"></script>
 
 <script>
-// ── RADAR + DOT ANIMATION ─────────────────────────────────────────────
 const RADAR_PERIOD = 4000;
 const SWEEP_WIDTH  = 48;
 const DOT_DEFS = [
@@ -144,18 +161,26 @@ const dots = DOT_DEFS.map(([deg, r]) => {
   return { el, deg };
 });
 const t0 = performance.now();
+function getAccentRgb() {
+  return document.body.classList.contains('light') ? '37,99,235' : '124,58,237';
+}
+function getLightAccentRgb() {
+  return document.body.classList.contains('light') ? '59,130,246' : '168,85,247';
+}
 function frame(now) {
   const sweep = ((now - t0) % RADAR_PERIOD) / RADAR_PERIOD * 360;
   radarEl.style.transform = `translate(-50%,-50%) rotate(${sweep}deg)`;
   const lineDeg = (sweep + 60) % 360;
+  const rgb = getAccentRgb();
+  const rgbLight = getLightAccentRgb();
   dots.forEach(({ el, deg }) => {
     const diff = (lineDeg - deg + 360) % 360;
     if (diff < SWEEP_WIDTH) {
       const i = Math.pow(1 - diff / SWEEP_WIDTH, 1.4);
-      el.style.background = `rgba(124,58,237,${0.1 + i * 0.9})`;
-      el.style.boxShadow  = i > 0.1 ? `0 0 ${i*14}px rgba(124,58,237,${i}),0 0 ${i*28}px rgba(168,85,247,${i*0.45})` : 'none';
+      el.style.background = `rgba(${rgb},${0.1 + i * 0.9})`;
+      el.style.boxShadow  = i > 0.1 ? `0 0 ${i*14}px rgba(${rgb},${i}),0 0 ${i*28}px rgba(${rgbLight},${i*0.45})` : 'none';
     } else {
-      el.style.background = 'rgba(124,58,237,0.12)';
+      el.style.background = `rgba(${rgb},0.12)`;
       el.style.boxShadow  = 'none';
     }
   });
