@@ -20,6 +20,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
       statusCode,
       durationMs: 0,
       ip: request.ip ?? request.headers['x-forwarded-for'] ?? 'unknown',
+      apiKeyPrefix: request.apiKey?.prefix ?? 'NONE',
+      user_agent: request.headers['user-agent'] ?? null,
     };
 
     this.logger.log(`${entry.method} ${entry.url} ${statusCode}`);

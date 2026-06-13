@@ -56,6 +56,11 @@ async function run() {
     assert.match(migratePool.calls[0].sql, /CREATE TABLE IF NOT EXISTS api_keys/);
     assert.match(migratePool.calls[0].sql, /key_hash TEXT NOT NULL/);
     assert.match(migratePool.calls[0].sql, /scopes TEXT\[\] NOT NULL/);
+    assert.equal(
+      migratePool.calls.some((call) => /api_request_logs/.test(call.sql)),
+      false,
+      'api key migration must not create request log tables',
+    );
 
     const createPoolInstance = createPool();
     const created = await createApiKey(createPoolInstance, {
