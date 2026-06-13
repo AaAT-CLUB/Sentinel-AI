@@ -1,9 +1,50 @@
-import requests
+import os
 import re
+import requests
+from dotenv import load_dotenv
+
+# ==========================================
+# ENVIRONMENT INITIALIZATION & CONFIG
+# ==========================================
+load_dotenv()
+
+DATA_API_URL = os.getenv("DATA_API_URL")
+DATA_API_KEY = os.getenv("DATA_API_KEY")
+
+
+def sync_to_data_team(report: dict):
+    """
+    Sends the compliance scan report directly to Team 2's data-api vulnerabilities route.
+    """
+    if not DATA_API_URL or not DATA_API_KEY:
+        print("⚠️ Warning: DATA_API_URL or DATA_API_KEY missing from .env file.")
+        return None
+
+    headers = {
+        "x-api-key": DATA_API_KEY,
+        "Content-Type": "application/json"
+    }
+    
+    # Appends /vulnerabilities to the base data-api URL path
+    endpoint = f"{DATA_API_URL.rstrip('/')}/vulnerabilities"
+    
+    try:
+        response = requests.post(endpoint, json=report, headers=headers, timeout=5)
+        
+        if response.status_code in [200, 201]:
+            print(f"✅ Database Sync Successful! Status: {response.status_code}")
+        else:
+            print(f"❌ Sync Rejected by Server. Status {response.status_code}: {response.text}")
+            
+        return response.status_code
+    except requests.exceptions.RequestException as e:
+        print(f"❌ Network Connection Error (Is Tailscale off?): {e}")
+        return None
+
 
 def check_compliance_all(url: str):
     """
-    Runs all 5 mandatory Week 3 compliance checks and returns a structured report.
+    Runs all 5 mandatory Week 3 compliance checks, saves them to Team 2's db, and returns the report.
     """
     if not url.startswith(("http://", "https://")):
         url = "https://" + url
@@ -19,11 +60,17 @@ def check_compliance_all(url: str):
     passed_count = sum([1 for r in results.values() if r["pass"]])
     score = passed_count * 20
     
-    return {
+    report = {
         "url": url,
         "score": score,
         "results": results
     }
+    
+    # Send off to Team 2's server
+    sync_to_data_team(report)
+    
+    return report
+
 
 def check_access_control(url: str) -> dict:
     paths = ["/admin", "/config", "/.env", "/backup.sql"]
@@ -40,6 +87,7 @@ def check_access_control(url: str) -> dict:
         "details": f"Exposed paths found: {found}" if found else "No exposed administrative paths detected."
     }
 
+
 def check_crypto(url: str) -> dict:
     if not url.startswith("https://"):
         return {"pass": False, "details": "Site does not use HTTPS. Traffic is unencrypted."}
@@ -52,6 +100,7 @@ def check_crypto(url: str) -> dict:
         return {"pass": True, "details": "HTTPS is active, but HSTS header is missing."}
     except:
         return {"pass": False, "details": "Failed to connect to the HTTPS endpoint."}
+
 
 def check_injection(url: str) -> dict:
     test_url = f"{url.rstrip('/')}/?id='"
@@ -66,6 +115,7 @@ def check_injection(url: str) -> dict:
     except:
         return {"pass": True, "details": "Endpoint handled unexpected input cleanly."}
 
+
 def check_misconfig(url: str) -> dict:
     try:
         r = requests.head(url, timeout=2)
@@ -77,6 +127,7 @@ def check_misconfig(url: str) -> dict:
         return {"pass": True, "details": f"Server banner is clean or hidden ('{server_header}')."}
     except:
         return {"pass": False, "details": "Target was unreachable during configuration scan."}
+
 
 def check_auth_failures(url: str) -> dict:
     try:

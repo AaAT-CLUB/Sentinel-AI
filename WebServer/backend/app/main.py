@@ -35,8 +35,9 @@ app.add_middleware(
 app.include_router(analyze_router, prefix="/api")
 
 # Configuration for Team 2 Integration
-TEAM2_API_KEY = os.getenv("TEAM2_API_KEY", "0ed02d19822ef098ce270715db907cb5ad5b6b73c75db47afad5ff6897642463")
-TEAM2_BASE_URL = os.getenv("TEAM2_API_BASE_URL", "https://sentinel-a-i.com/data-api")
+# FIXED: Pointed to matching .env keys and applied SirSephiroth's accurate credentials
+TEAM2_API_KEY = os.getenv("DATA_API_KEY", "sk_sentinel_Bead_O4xRDfdpSsXuc758mQahfB980HuTTBEe5gTUPo9P6T4")
+TEAM2_BASE_URL = os.getenv("DATA_API_URL", "https://sentinel-ai-data.tail55e29b.ts.net/data-api")
 
 @app.get("/health")
 def health():
@@ -80,7 +81,7 @@ def get_compliance_report(url: str = Query(..., description="The target URL to c
     
     # 3. Synchronize data to Team 2's backend via POST JSON body
     try:
-        sync_endpoint = f"{TEAM2_BASE_URL}/vulnerabilities"
+        sync_endpoint = f"{TEAM2_BASE_URL.rstrip('/')}/vulnerabilities"
         response = requests.post(sync_endpoint, json=payload, headers=headers, timeout=5)
         
         report["team2_database_sync"] = {
