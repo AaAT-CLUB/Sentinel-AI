@@ -12,6 +12,10 @@ const CHECK_LABELS = {
   'A03_Injection':                'A03',
   'A05_Security_Misconfiguration':'A05',
   'A07_Auth_Failures':            'A07',
+  'W4_Security_Headers':          'HDR',
+  'W4_Open_Redirect':             'RDR',
+  'W4_Directory_Listing':         'DIR',
+  'W4_Cookie_Security':           'CKI',
 };
 
 const SCAN_PHASES = [
